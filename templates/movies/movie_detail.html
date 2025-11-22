@@ -1,0 +1,54 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<style>
+  body { background-color: #0f172a; }
+  .card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; }
+  .title { color: #e2e8f0; font-weight: 700; }
+  .text { color: #94a3b8; }
+  .badge { background: #1d4ed8; }
+</style>
+
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-5">
+      <div class="card mb-3">
+        <img src="{{ movie.image.url }}" class="card-img-top" alt="{{ movie.name }}" style="height: 320px; object-fit: cover;" onerror="this.onerror=null;this.src='/static/img/placeholder.jpg';" />
+        <div class="card-body">
+          <h3 class="title">{{ movie.name }}</h3>
+          <p class="text">{{ movie.description }}</p>
+          <span class="badge">{{ movie.genre }}</span>
+          <span class="badge">{{ movie.language }}</span>
+          {% if movie.release_year %}<span class="badge">{{ movie.release_year }}</span>{% endif %}
+        </div>
+      </div>
+      {% if trailer_embed_url %}
+      <div class="card p-2 mb-3">
+        <div class="title mb-2">Trailer</div>
+        <div class="ratio ratio-16x9">
+          <iframe src="{{ trailer_embed_url }}" title="YouTube trailer" frameborder="0" allowfullscreen></iframe>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="col-md-7">
+      <div class="card p-3">
+        <div class="title mb-2">Showtimes</div>
+        {% for t in theaters %}
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <span class="badge">{{ t.format }}</span>
+            <span class="badge">₹{{ t.price }}</span>
+            <span class="text">{{ t.time }}</span>
+          </div>
+          <div>
+            <a class="btn btn-success btn-sm" href="{% url 'book_seats' t.id %}">Book</a>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text">No showtimes available.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

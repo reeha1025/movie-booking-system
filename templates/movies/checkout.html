@@ -1,0 +1,56 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --title: #f0f6fc;
+    --accent: #58a6ff;
+    --success: #238636;
+    --danger: #da3633;
+  }
+  body { background-color: var(--bg); color: var(--text); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+  .title { color: var(--title); font-weight: 700; }
+  .text { color: var(--text); }
+  .btn-success { background: var(--success); border-color: var(--success); }
+  .btn-outline-danger { border-color: var(--danger); color: var(--danger); }
+</style>
+
+<div class="container py-4">
+  <h2 class="title mb-3">Checkout</h2>
+  <div class="card p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <div class="text">{{ theaters.name }}</div>
+        <div class="text">{{ theaters.movie.name }} • {{ theaters.format }} • {{ theaters.time }}</div>
+        <div class="text">Price per ticket: ₹{{ theaters.price }}</div>
+      </div>
+    </div>
+  </div>
+
+  {% if bookings %}
+  <div class="card p-3 mb-3">
+    <h5 class="title mb-2">Your reserved seats</h5>
+    {% for b in bookings %}
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="text">Seat {{ b.seat.seat_number }} (expires {{ b.expires_at|date:"d M Y H:i" }})</div>
+        <div>
+          <a class="btn btn-success btn-sm" href="{% url 'pay_booking' b.id %}">Pay Now</a>
+          <a class="btn btn-outline-danger btn-sm" href="{% url 'cancel_booking' b.id %}">Cancel</a>
+        </div>
+      </div>
+    {% endfor %}
+    <hr />
+    <div class="d-flex justify-content-between">
+      <div class="title">Total</div>
+      <div class="title">₹{{ total }}</div>
+    </div>
+  </div>
+  {% else %}
+    <p class="text">No pending reservations. Go back to select seats.</p>
+  {% endif %}
+</div>
+{% endblock %}

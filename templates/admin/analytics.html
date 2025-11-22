@@ -1,0 +1,52 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --title: #f0f6fc;
+    --accent: #58a6ff;
+  }
+  body { background-color: var(--bg); color: var(--text); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+  .title { color: var(--title); font-weight: 700; }
+  .text { color: var(--text); }
+</style>
+
+<div class="container py-4">
+  <h2 class="title mb-3">Admin Analytics</h2>
+  <div class="card p-3 mb-3">
+    <div class="title">Total Revenue</div>
+    <div class="text">₹{{ revenue }}</div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card p-3 mb-3">
+        <div class="title mb-2">Top Movies</div>
+        <ul class="list-group">
+          {% for name, count in movie_top %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">{{ name }}<span class="badge badge-primary badge-pill">{{ count }}</span></li>
+          {% empty %}
+          <li class="list-group-item">No data</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card p-3 mb-3">
+        <div class="title mb-2">Busiest Theaters</div>
+        <ul class="list-group">
+          {% for name, count in theater_top %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">{{ name }}<span class="badge badge-primary badge-pill">{{ count }}</span></li>
+          {% empty %}
+          <li class="list-group-item">No data</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

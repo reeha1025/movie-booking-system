@@ -1,0 +1,159 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<style>
+  body { background-color: #f8f9fa; }
+  .payment-container { max-width: 500px; margin: 0 auto; padding: 20px; }
+  .card-element { background: white; padding: 15px; border: 1px solid #dee2e6; border-radius: 8px; }
+  .payment-info { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+</style>
+
+<div class="container py-5">
+  <div class="payment-container">
+    <div class="payment-info">
+      <h3 class="text-center mb-4">Complete Your Payment</h3>
+      {% if test_mode %}
+      <div class="alert alert-info text-center mb-3">
+        <strong>Test Mode Active:</strong> Payment will be simulated for development
+      </div>
+      <!-- Debug Information -->
+      <div class="alert alert-warning text-center mb-3">
+        <small>Debug: Test Mode = ON, Booking ID = {{ booking.id }}</small>
+      </div>
+      {% endif %}
+      <div class="mb-3">
+        <strong>Movie:</strong> {{ booking.movie.name }}
+      </div>
+      <div class="mb-3">
+        <strong>Theater:</strong> {{ booking.theater.name }}
+      </div>
+      <div class="mb-3">
+        <strong>Seat:</strong> {{ booking.seat.seat_number }}
+      </div>
+      <div class="mb-3">
+        <strong>Amount:</strong> ₹{{ amount }}
+      </div>
+    </div>
+
+    <form id="payment-form">
+      {% if not test_mode %}
+      <div class="form-group mb-3">
+        <label for="card-element">Credit or debit card</label>
+        <div id="card-element" class="card-element">
+          <!-- A Stripe Element will be inserted here. -->
+        </div>
+        <div id="card-errors" class="text-danger mt-2" role="alert"></div>
+      </div>
+      {% else %}
+      <div class="alert alert-success text-center mb-3">
+        <strong>Test Mode:</strong> Click the button below to simulate successful payment
+      </div>
+      {% endif %}
+
+      <button id="submit-button" class="btn btn-primary btn-lg w-100">
+        <span id="button-text">Pay ₹{{ amount }}</span>
+        <span id="spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+      </button>
+    </form>
+
+    <div id="payment-result" class="alert d-none mt-3"></div>
+  </div>
+</div>
+
+{% if not test_mode %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+  // Initialize Stripe only when not in test mode
+  var stripe = Stripe('{{ stripe_publishable_key }}');
+  var elements = stripe.elements();
+
+  // Create an instance of the card Element
+  var card = elements.create('card', {
+    style: {
+      base: {
+        fontSize: '16px',
+        color: '#495057',
+        '::placeholder': {
+          color: '#6c757d'
+        }
+      }
+    }
+  });
+
+  // Add an instance of the card Element into the `card-element` div
+  card.mount('#card-element');
+
+  // Handle real-time validation errors from the card Element
+  card.on('change', function(event) {
+    var displayError = document.getElementById('card-errors');
+    if (event.error) {
+      displayError.textContent = event.error.message;
+    } else {
+      displayError.textContent = '';
+    }
+  });
+</script>
+{% endif %}
+
+<script>
+  // Handle form submission - works for both test mode and real payments
+  var form = document.getElementById('payment-form');
+  var submitButton = document.getElementById('submit-button');
+  var spinner = document.getElementById('spinner');
+  var buttonText = document.getElementById('button-text');
+
+  // Set up redirect URL and payment processing function based on mode
+  {% if test_mode %}
+  // Test mode configuration
+  var redirectUrl = "{% url 'payment_success' booking.id %}";
+  var processPayment = function() {
+    console.log('Test mode - redirecting to success page');
+    setTimeout(function() {
+      window.location.href = redirectUrl;
+    }, 1500); // Simulate processing delay
+  };
+  {% else %}
+  // Real payment mode configuration
+  var processPayment = function() {
+    stripe.confirmCardPayment('{{ client_secret }}', {
+      payment_method: {
+        card: card,
+        billing_details: {
+          name: '{{ user.get_full_name|default:user.username }}',
+          email: '{{ user.email }}'
+        }
+      }
+    }).then(function(result) {
+      if (result.error) {
+        // Show error to your customer
+        var errorElement = document.getElementById('card-errors');
+        errorElement.textContent = result.error.message;
+        
+        // Re-enable the submit button and hide spinner
+        submitButton.disabled = false;
+        spinner.classList.add('d-none');
+        buttonText.textContent = 'Pay ₹{{ amount }}';
+      } else {
+        // The payment has been processed!
+        if (result.paymentIntent.status === 'succeeded') {
+          // Redirect to success page
+          window.location.href = "{% url 'payment_success' booking.id %}";
+        }
+      }
+    });
+  };
+  {% endif %}
+
+  form.addEventListener('submit', function(event) {
+    event.preventDefault();
+    console.log('Payment form submitted');
+    
+    // Disable the submit button and show spinner
+    submitButton.disabled = true;
+    spinner.classList.remove('d-none');
+    buttonText.textContent = 'Processing...';
+
+    // Process payment based on mode
+    processPayment();
+  });
+</script>
+{% endblock %}

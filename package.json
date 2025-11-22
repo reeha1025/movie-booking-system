@@ -1,0 +1,16 @@
+{
+  "name": "project-name",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "enable"
+  },
+  "dependencies": {
+    "enable": "^1.0.0"
+  },
+  "devDependencies": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

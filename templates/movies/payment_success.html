@@ -1,0 +1,68 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<style>
+  .success-container { max-width: 600px; margin: 0 auto; padding: 40px 20px; text-align: center; }
+  .success-icon { font-size: 80px; color: #28a745; margin-bottom: 20px; }
+  .booking-details { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 30px; }
+  .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+  .detail-row:last-child { border-bottom: none; }
+</style>
+
+<div class="container py-5">
+  <div class="success-container">
+    <div class="success-icon">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    
+    <h1 class="text-success mb-3">Payment Successful!</h1>
+    <p class="lead">Your movie ticket has been booked successfully.</p>
+    
+    <div class="booking-details">
+      <h3 class="mb-4">Booking Details</h3>
+      
+      <div class="detail-row">
+        <strong>Movie:</strong>
+        <span>{{ booking.movie.name }}</span>
+      </div>
+      
+      <div class="detail-row">
+        <strong>Theater:</strong>
+        <span>{{ booking.theater.name }}</span>
+      </div>
+      
+      <div class="detail-row">
+        <strong>Show Time:</strong>
+        <span>{{ booking.theater.time|date:"d M Y, h:i A" }}</span>
+      </div>
+      
+      <div class="detail-row">
+        <strong>Seat Number:</strong>
+        <span>{{ booking.seat.seat_number }}</span>
+      </div>
+      
+      <div class="detail-row">
+        <strong>Amount Paid:</strong>
+        <span>₹{{ booking.theater.price }}</span>
+      </div>
+      
+      <div class="detail-row">
+        <strong>Booking ID:</strong>
+        <span>#{{ booking.id }}</span>
+      </div>
+    </div>
+    
+    <div class="mt-4">
+      <a href="{% url 'profile' %}" class="btn btn-primary btn-lg me-3">
+        <i class="fas fa-user me-2"></i>View Profile
+      </a>
+      <a href="{% url 'movie_list' %}" class="btn btn-outline-primary btn-lg">
+        <i class="fas fa-film me-2"></i>Browse More Movies
+      </a>
+    </div>
+    
+    <div class="mt-4 text-muted">
+      <small>A confirmation email has been sent to your registered email address.</small>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<style>
+  .debug-container { max-width: 600px; margin: 0 auto; padding: 20px; }
+  .debug-info { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+</style>
+
+<div class="container py-5">
+  <div class="debug-container">
+    <h2>Payment Debug Information</h2>
+    
+    <div class="debug-info">
+      <h4>Test Mode Status</h4>
+      <p><strong>Test Mode:</strong> {{ test_mode|yesno:"Active,Inactive" }}</p>
+      <p><strong>Client Secret:</strong> {{ client_secret|default:"None" }}</p>
+      <p><strong>Amount:</strong> ₹{{ amount }}</p>
+      <p><strong>Booking ID:</strong> {{ booking.id }}</p>
+    </div>
+    
+    {% if test_mode %}
+    <div class="alert alert-info">
+      <h5>Test Mode Active</h5>
+      <p>You should see a simple button to simulate payment</p>
+    </div>
+    
+    <form id="payment-form">
+      <div class="alert alert-success text-center mb-3">
+        <strong>Test Mode:</strong> Click the button below to simulate successful payment
+      </div>
+      
+      <button type="submit" id="submit-button" class="btn btn-primary btn-lg w-100">
+        <span id="button-text">Pay ₹{{ amount }} (Test Mode)</span>
+        <span id="spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+      </button>
+    </form>
+    
+    <script>
+      console.log('Test mode active - using simple form submission');
+      
+      var form = document.getElementById('payment-form');
+      var submitButton = document.getElementById('submit-button');
+      var spinner = document.getElementById('spinner');
+      var buttonText = document.getElementById('button-text');
+      
+      form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        console.log('Form submitted - test mode');
+        
+        // Disable button and show spinner
+        submitButton.disabled = true;
+        spinner.classList.remove('d-none');
+        buttonText.textContent = 'Processing...';
+        
+        // Simulate payment and redirect
+        setTimeout(function() {
+          console.log('Redirecting to payment success...');
+          window.location.href = '{% url "payment_success" booking.id %}';
+        }, 1500);
+      });
+    </script>
+    
+    {% else %}
+    <div class="alert alert-warning">
+      <h5>Real Payment Mode</h5>
+      <p>Stripe card input should appear below</p>
+    </div>
+    {% endif %}
+    
+    <div class="mt-4">
+      <a href="{% url 'checkout' booking.theater.id %}" class="btn btn-secondary">Back to Checkout</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

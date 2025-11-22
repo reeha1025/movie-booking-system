@@ -1,0 +1,51 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<style>
+  .test-container { max-width: 500px; margin: 0 auto; padding: 20px; text-align: center; }
+  .test-button { margin: 20px; }
+</style>
+
+<div class="container py-5">
+  <div class="test-container">
+    <h2>Payment Test</h2>
+    
+    <div class="alert alert-info">
+      <strong>Test Mode Active</strong><br>
+      Booking ID: {{ booking.id }}<br>
+      Amount: ₹{{ amount }}
+    </div>
+    
+    <form id="test-payment-form">
+      <button type="submit" class="btn btn-success btn-lg test-button">
+        Test Payment - Click to Pay ₹{{ amount }}
+      </button>
+    </form>
+    
+    <div id="result" class="mt-3"></div>
+    
+    <script>
+      console.log('Test payment script loaded');
+      
+      var form = document.getElementById('test-payment-form');
+      var result = document.getElementById('result');
+      
+      form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        console.log('Test payment form submitted');
+        
+        // Show processing
+        result.innerHTML = '<div class="alert alert-warning">Processing payment...</div>';
+        
+        // Simulate payment processing
+        setTimeout(function() {
+          console.log('Redirecting to payment success...');
+          result.innerHTML = '<div class="alert alert-success">Payment successful! Redirecting...</div>';
+          
+          // Redirect to payment success
+          window.location.href = '{% url "payment_success" booking.id %}';
+        }, 1500);
+      });
+    </script>
+  </div>
+</div>
+{% endblock %}
