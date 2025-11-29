@@ -11,7 +11,7 @@
   .amount-display { background: #111827; border-radius: 12px; padding: 15px; text-align: center; margin-bottom: 24px; }
   .amount-label { color: #9ca3af; font-size: clamp(12px, 3vw, 14px); margin-bottom: 8px; }
   .amount-value { color: #10B981; font-size: clamp(28px, 8vw, 36px); font-weight: 700; }
-  .upi-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 24px 0; }
+  .upi-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 24px 0; }
   .upi-option { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px; background: #111827; border: 2px solid #374151; border-radius: 12px; cursor: pointer; transition: all 0.3s; touch-action: manipulation; aspect-ratio: 1; }
   .upi-option:hover { border-color: #6366f1; transform: scale(1.05); }
   .upi-option.selected { border-color: #10B981; background: rgba(16, 185, 129, 0.2); }
@@ -86,17 +86,6 @@
             <div class="upi-label">PhonePe</div>
           </div>
 
-          <div class="upi-option" onclick="selectUPI('paytm')">
-            <input type="radio" name="upi_app" value="paytm" id="paytm" style="display:none;">
-            <img src="https://paytm.com/images/Logo-Positive.svg" class="upi-icon" alt="Paytm">
-            <div class="upi-label">Paytm</div>
-          </div>
-
-          <div class="upi-option" onclick="selectUPI('bhim')">
-            <input type="radio" name="upi_app" value="bhim" id="bhim" style="display:none;">
-            <img src="https://web-static.apna.co/images/bhim-upi-logo.png" class="upi-icon" alt="BHIM UPI">
-            <div class="upi-label">BHIM</div>
-          </div>
         </div>
 
         <button type="submit" class="btn-pay" id="payBtn" disabled>
