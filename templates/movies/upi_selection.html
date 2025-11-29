@@ -1,0 +1,122 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<style>
+  body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; }
+  .payment-container { max-width: 500px; margin: 40px auto; }
+  .card { background: #1f2937; border: 1px solid #374151; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+  .card-header { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 16px 16px 0 0; padding: 24px; text-align: center; }
+  .card-header h3 { color: #fff; margin: 0; font-weight: 700; }
+  .card-body { padding: 32px; }
+  .amount-display { background: #111827; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 24px; }
+  .amount-label { color: #9ca3af; font-size: 14px; margin-bottom: 8px; }
+  .amount-value { color: #10b981; font-size: 36px; font-weight: 700; }
+  .upi-option { display: flex; align-items: center; padding: 16px; background: #111827; border: 2px solid #374151; border-radius: 12px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s; }
+  .upi-option:hover { border-color: #6366f1; transform: translateX(4px); }
+  .upi-option.selected { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+  .upi-icon { width: 48px; height: 48px; border-radius: 8px; margin-right: 16px; object-fit: contain; background: #fff; padding: 4px; }
+  .upi-name { color: #f3f4f6; font-weight: 600; font-size: 16px; }
+  .upi-desc { color: #9ca3af; font-size: 12px; }
+  .btn-pay { width: 100%; padding: 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; border-radius: 12px; color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.3s; margin-top: 20px; }
+  .btn-pay:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
+  .btn-pay:disabled { background: #4b5563; cursor: not-allowed; transform: none; }
+  .secure-badge { display: flex; align-items: center; justify-content: center; margin-top: 20px; color: #9ca3af; font-size: 12px; }
+  .secure-badge svg { margin-right: 6px; }
+  .booking-info { background: #111827; border-radius: 12px; padding: 16px; margin-bottom: 24px; }
+  .booking-info-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #374151; }
+  .booking-info-item:last-child { border-bottom: none; }
+  .booking-info-label { color: #9ca3af; }
+  .booking-info-value { color: #f3f4f6; font-weight: 600; }
+</style>
+
+<div class="payment-container">
+  <div class="card">
+    <div class="card-header">
+      <h3>Select Payment Method</h3>
+    </div>
+    <div class="card-body">
+      <div class="booking-info">
+        <div class="booking-info-item">
+          <span class="booking-info-label">Movie</span>
+          <span class="booking-info-value">{{ booking.movie.name }}</span>
+        </div>
+        <div class="booking-info-item">
+          <span class="booking-info-label">Theater</span>
+          <span class="booking-info-value">{{ booking.theater.name }}</span>
+        </div>
+        <div class="booking-info-item">
+          <span class="booking-info-label">Seat</span>
+          <span class="booking-info-value">{{ booking.seat.seat_number }}</span>
+        </div>
+        <div class="booking-info-item">
+          <span class="booking-info-label">Show Time</span>
+          <span class="booking-info-value">{{ booking.theater.time|date:"M d, Y h:i A" }}</span>
+        </div>
+      </div>
+
+      <div class="amount-display">
+        <div class="amount-label">Total Amount</div>
+        <div class="amount-value">₹{{ amount }}</div>
+      </div>
+
+      <form method="post" id="upiForm">
+        {% csrf_token %}
+        <div class="upi-option" onclick="selectUPI('gpay')">
+          <input type="radio" name="upi_app" value="gpay" id="gpay" style="display:none;">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png" class="upi-icon" alt="Google Pay">
+          <div>
+            <div class="upi-name">Google Pay</div>
+            <div class="upi-desc">Pay using Google Pay UPI</div>
+          </div>
+        </div>
+
+        <div class="upi-option" onclick="selectUPI('phonepe')">
+          <input type="radio" name="upi_app" value="phonepe" id="phonepe" style="display:none;">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/PhonePe_Logo.png/220px-PhonePe_Logo.png" class="upi-icon" alt="PhonePe">
+          <div>
+            <div class="upi-name">PhonePe</div>
+            <div class="upi-desc">Pay using PhonePe UPI</div>
+          </div>
+        </div>
+
+        <div class="upi-option" onclick="selectUPI('paytm')">
+          <input type="radio" name="upi_app" value="paytm" id="paytm" style="display:none;">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Paytm_Logo_%28standalone%29.svg/440px-Paytm_Logo_%28standalone%29.svg.png" class="upi-icon" alt="Paytm">
+          <div>
+            <div class="upi-name">Paytm</div>
+            <div class="upi-desc">Pay using Paytm UPI</div>
+          </div>
+        </div>
+
+        <div class="upi-option" onclick="selectUPI('bhim')">
+          <input type="radio" name="upi_app" value="bhim" id="bhim" style="display:none;">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/UPI-Logo-vector.svg/440px-UPI-Logo-vector.svg.png" class="upi-icon" alt="BHIM UPI">
+          <div>
+            <div class="upi-name">BHIM UPI</div>
+            <div class="upi-desc">Pay using any UPI app</div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-pay" id="payBtn" disabled>
+          Continue to Pay ₹{{ amount }}
+        </button>
+      </form>
+
+      <div class="secure-badge">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+        </svg>
+        100% Secure Payment | Powered by UPI
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function selectUPI(app) {
+  document.querySelectorAll('.upi-option').forEach(el => el.classList.remove('selected'));
+  document.getElementById(app).checked = true;
+  document.getElementById(app).parentElement.classList.add('selected');
+  document.getElementById('payBtn').disabled = false;
+}
+</script>
+{% endblock %}

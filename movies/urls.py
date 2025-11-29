@@ -7,6 +7,8 @@ urlpatterns=[
     path('theater/<int:theater_id>/seats/book/',views.book_seats,name='book_seats'),
     path('theater/<int:theater_id>/checkout/',views.checkout,name='checkout'),
     path('bookings/<int:booking_id>/pay/',views.pay_booking,name='pay_booking'),
+    path('bookings/<int:booking_id>/otp/<str:upi_app>/',views.upi_otp,name='upi_otp'),
+    path('bookings/<int:booking_id>/scanner/',views.upi_scanner,name='upi_scanner'),
     path('bookings/<int:booking_id>/payment-success/',views.payment_success,name='payment_success'),
     path('bookings/<int:booking_id>/cancel/',views.cancel_booking,name='cancel_booking'),
 ]

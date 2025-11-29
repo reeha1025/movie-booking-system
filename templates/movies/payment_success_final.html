@@ -1,0 +1,131 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<style>
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%); min-height: 100vh; overflow-x: hidden; }
+  .success-container { max-width: 600px; margin: 40px auto; padding: 20px; }
+  .success-card { background: linear-gradient(145deg, #1f2937 0%, #111827 100%); border: 1px solid #374151; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); overflow: hidden; position: relative; }
+  .confetti { position: absolute; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
+  .confetti-piece { position: absolute; width: 10px; height: 10px; animation: fall 3s linear infinite; }
+  @keyframes fall { 0% { transform: translateY(-100px) rotate(0deg); opacity: 1; } 100% { transform: translateY(600px) rotate(720deg); opacity: 0; } }
+  .success-header { background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%); padding: 40px; text-align: center; position: relative; }
+  .success-icon { width: 100px; height: 100px; background: #fff; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; animation: bounce 1s ease-in-out; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); }
+  @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+  .success-icon svg { width: 60px; height: 60px; color: #10b981; }
+  .success-title { color: #fff; font-size: 32px; font-weight: 800; margin: 0 0 8px; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); }
+  .success-subtitle { color: rgba(255, 255, 255, 0.9); font-size: 18px; }
+  .success-body { padding: 32px; }
+  .ticket-section { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px dashed #374151; border-radius: 16px; padding: 24px; margin-bottom: 24px; position: relative; }
+  .ticket-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed #374151; }
+  .movie-name { color: #f3f4f6; font-size: 24px; font-weight: 700; }
+  .ticket-badge { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; padding: 6px 16px; border-radius: 50px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+  .ticket-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .ticket-item { background: #111827; border-radius: 12px; padding: 16px; }
+  .ticket-label { color: #6b7280; font-size: 12px; text-transform: uppercase; margin-bottom: 4px; }
+  .ticket-value { color: #f3f4f6; font-size: 16px; font-weight: 600; }
+  .ticket-value.highlight { color: #10b981; font-size: 20px; }
+  .qr-ticket { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px dashed #374151; }
+  .qr-ticket img { width: 120px; height: 120px; background: #fff; padding: 8px; border-radius: 8px; }
+  .qr-hint { color: #6b7280; font-size: 12px; margin-top: 8px; }
+  .message-box { background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 24px; }
+  .message-emoji { font-size: 48px; margin-bottom: 12px; }
+  .message-text { color: #10b981; font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+  .message-subtext { color: #9ca3af; font-size: 14px; }
+  .action-buttons { display: flex; gap: 12px; }
+  .btn-primary { flex: 1; padding: 16px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border: none; border-radius: 12px; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; text-decoration: none; text-align: center; transition: all 0.3s; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
+  .btn-secondary { flex: 1; padding: 16px; background: transparent; border: 2px solid #374151; border-radius: 12px; color: #f3f4f6; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; text-align: center; transition: all 0.3s; }
+  .btn-secondary:hover { border-color: #6366f1; background: rgba(99, 102, 241, 0.1); }
+  .footer-note { text-align: center; margin-top: 24px; padding: 16px; background: #111827; border-radius: 12px; }
+  .footer-note p { color: #6b7280; font-size: 12px; margin: 0; }
+  .footer-note a { color: #6366f1; text-decoration: none; }
+  .stars { position: absolute; width: 100%; height: 100%; }
+  .star { position: absolute; background: #fff; border-radius: 50%; animation: twinkle 2s ease-in-out infinite; }
+  @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.2); } }
+</style>
+
+<div class="success-container">
+  <div class="success-card">
+    <div class="confetti">
+      <div class="confetti-piece" style="left: 10%; background: #10b981; animation-delay: 0s;"></div>
+      <div class="confetti-piece" style="left: 20%; background: #f59e0b; animation-delay: 0.3s;"></div>
+      <div class="confetti-piece" style="left: 30%; background: #6366f1; animation-delay: 0.6s;"></div>
+      <div class="confetti-piece" style="left: 40%; background: #ec4899; animation-delay: 0.9s;"></div>
+      <div class="confetti-piece" style="left: 50%; background: #10b981; animation-delay: 1.2s;"></div>
+      <div class="confetti-piece" style="left: 60%; background: #f59e0b; animation-delay: 0.2s;"></div>
+      <div class="confetti-piece" style="left: 70%; background: #6366f1; animation-delay: 0.5s;"></div>
+      <div class="confetti-piece" style="left: 80%; background: #ec4899; animation-delay: 0.8s;"></div>
+      <div class="confetti-piece" style="left: 90%; background: #10b981; animation-delay: 1.1s;"></div>
+    </div>
+
+    <div class="success-header">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1 class="success-title">Payment Successful!</h1>
+      <p class="success-subtitle">Your tickets have been booked</p>
+    </div>
+
+    <div class="success-body">
+      <div class="message-box">
+        <div class="message-emoji">🎬🍿</div>
+        <div class="message-text">Enjoy Your Movie!</div>
+        <div class="message-subtext">Get ready for an amazing cinematic experience</div>
+      </div>
+
+      <div class="ticket-section">
+        <div class="ticket-header">
+          <span class="movie-name">{{ booking.movie.name }}</span>
+          <span class="ticket-badge">Confirmed</span>
+        </div>
+        
+        <div class="ticket-details">
+          <div class="ticket-item">
+            <div class="ticket-label">Theater</div>
+            <div class="ticket-value">{{ booking.theater.name }}</div>
+          </div>
+          <div class="ticket-item">
+            <div class="ticket-label">Show Time</div>
+            <div class="ticket-value">{{ booking.theater.time|date:"M d, h:i A" }}</div>
+          </div>
+          <div class="ticket-item">
+            <div class="ticket-label">Seat Number</div>
+            <div class="ticket-value highlight">{{ booking.seat.seat_number }}</div>
+          </div>
+          <div class="ticket-item">
+            <div class="ticket-label">Amount Paid</div>
+            <div class="ticket-value highlight">₹{{ booking.theater.price }}</div>
+          </div>
+        </div>
+
+        <div class="qr-ticket">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=BOOKMYSEAT-{{ booking.id }}-{{ booking.seat.seat_number }}" alt="Ticket QR">
+          <div class="qr-hint">Show this QR code at the theater entrance</div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <a href="{% url 'profile' %}" class="btn-primary">View My Bookings</a>
+        <a href="/" class="btn-secondary">Book More Tickets</a>
+      </div>
+
+      <div class="footer-note">
+        <p>A confirmation email has been sent to your registered email address.<br>For any queries, contact <a href="#">support@bookmyseat.com</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+for (let i = 0; i < 50; i++) {
+  const confetti = document.createElement('div');
+  confetti.className = 'confetti-piece';
+  confetti.style.left = Math.random() * 100 + '%';
+  confetti.style.background = ['#10b981', '#f59e0b', '#6366f1', '#ec4899', '#06b6d4'][Math.floor(Math.random() * 5)];
+  confetti.style.animationDelay = Math.random() * 3 + 's';
+  confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+  document.querySelector('.confetti').appendChild(confetti);
+}
+</script>
+{% endblock %}

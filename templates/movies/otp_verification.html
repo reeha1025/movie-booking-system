@@ -1,0 +1,109 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<style>
+  body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; }
+  .otp-container { max-width: 450px; margin: 40px auto; }
+  .card { background: #1f2937; border: 1px solid #374151; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+  .card-header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 16px 16px 0 0; padding: 24px; text-align: center; }
+  .card-header h3 { color: #fff; margin: 0; font-weight: 700; }
+  .card-body { padding: 32px; text-align: center; }
+  .upi-logo { width: 80px; height: 80px; margin: 0 auto 20px; background: #fff; border-radius: 16px; padding: 12px; }
+  .upi-logo img { width: 100%; height: 100%; object-fit: contain; }
+  .info-text { color: #9ca3af; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+  .email-display { background: #111827; border-radius: 8px; padding: 12px; margin-bottom: 24px; }
+  .email-label { color: #9ca3af; font-size: 12px; }
+  .email-value { color: #10b981; font-weight: 600; }
+  .otp-input-group { display: flex; justify-content: center; gap: 12px; margin-bottom: 24px; }
+  .otp-input { width: 50px; height: 60px; text-align: center; font-size: 24px; font-weight: 700; background: #111827; border: 2px solid #374151; border-radius: 12px; color: #f3f4f6; outline: none; transition: all 0.3s; }
+  .otp-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+  .btn-verify { width: 100%; padding: 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; border-radius: 12px; color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+  .btn-verify:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
+  .resend-link { color: #6366f1; text-decoration: none; font-size: 14px; margin-top: 16px; display: inline-block; }
+  .resend-link:hover { text-decoration: underline; }
+  .timer { color: #f59e0b; font-size: 14px; margin-top: 16px; }
+  .success-message { background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 8px; padding: 12px; margin-bottom: 20px; color: #10b981; }
+</style>
+
+<div class="otp-container">
+  <div class="card">
+    <div class="card-header">
+      <h3>Verify OTP</h3>
+    </div>
+    <div class="card-body">
+      <div class="upi-logo">
+        {% if upi_app == 'gpay' %}
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png" alt="Google Pay">
+        {% elif upi_app == 'phonepe' %}
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/PhonePe_Logo.png/220px-PhonePe_Logo.png" alt="PhonePe">
+        {% elif upi_app == 'paytm' %}
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Paytm_Logo_%28standalone%29.svg/440px-Paytm_Logo_%28standalone%29.svg.png" alt="Paytm">
+        {% else %}
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/UPI-Logo-vector.svg/440px-UPI-Logo-vector.svg.png" alt="BHIM UPI">
+        {% endif %}
+      </div>
+
+      <div class="success-message">
+        OTP sent successfully to your registered email!
+      </div>
+
+      <div class="info-text">
+        We've sent a 4-digit verification code to your registered email address. Please enter the code below to continue.
+      </div>
+
+      <div class="email-display">
+        <div class="email-label">OTP sent to</div>
+        <div class="email-value">{{ user_email }}</div>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="upi_app" value="{{ upi_app }}">
+        
+        <div class="otp-input-group">
+          <input type="text" class="otp-input" maxlength="1" name="otp1" id="otp1" autofocus>
+          <input type="text" class="otp-input" maxlength="1" name="otp2" id="otp2">
+          <input type="text" class="otp-input" maxlength="1" name="otp3" id="otp3">
+          <input type="text" class="otp-input" maxlength="1" name="otp4" id="otp4">
+        </div>
+
+        <button type="submit" class="btn-verify">Verify & Continue</button>
+      </form>
+
+      <div class="timer" id="timer">Resend OTP in <span id="countdown">30</span>s</div>
+      <a href="#" class="resend-link" id="resendLink" style="display:none;" onclick="resendOTP()">Resend OTP</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const inputs = document.querySelectorAll('.otp-input');
+inputs.forEach((input, index) => {
+  input.addEventListener('input', (e) => {
+    if (e.target.value.length === 1 && index < inputs.length - 1) {
+      inputs[index + 1].focus();
+    }
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+      inputs[index - 1].focus();
+    }
+  });
+});
+
+let countdown = 30;
+const timer = setInterval(() => {
+  countdown--;
+  document.getElementById('countdown').textContent = countdown;
+  if (countdown <= 0) {
+    clearInterval(timer);
+    document.getElementById('timer').style.display = 'none';
+    document.getElementById('resendLink').style.display = 'inline-block';
+  }
+}, 1000);
+
+function resendOTP() {
+  alert('OTP resent to your email!');
+  location.reload();
+}
+</script>
+{% endblock %}

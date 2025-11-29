@@ -122,112 +122,67 @@ def checkout(request, theater_id):
 def pay_booking(request, booking_id):
     b = get_object_or_404(Booking, id=booking_id, user=request.user)
     if b.status == Booking.StatusChoices.PENDING:
-        try:
-            # Check if we're in test mode
-            if settings.STRIPE_TEST_MODE:
-                # In test mode, create a mock payment intent
-                import uuid
-                mock_client_secret = f"mock_client_secret_{uuid.uuid4().hex}"
-                b.payment_intent_id = f"mock_intent_{uuid.uuid4().hex}"
-                b.save(update_fields=["payment_intent_id"])
-                
-                # Use debug template for testing
-                if request.GET.get('debug') == '1':
-                    return render(request, 'movies/payment_debug.html', {
-                        'client_secret': mock_client_secret,
-                        'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
-                        'booking': b,
-                        'amount': b.theater.price,
-                        'test_mode': True
-                    })
-                
-                return render(request, 'movies/payment.html', {
-                    'client_secret': mock_client_secret,
-                    'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
-                    'booking': b,
-                    'amount': b.theater.price,
-                    'test_mode': True
-                })
-            
-            # Create Stripe Payment Intent
-            intent = stripe.PaymentIntent.create(
-                amount=int(b.theater.price * 100),  # Convert to cents
-                currency='inr',
-                metadata={'booking_id': b.id, 'user_id': request.user.id},
-                description=f"Movie ticket for {b.movie.name} at {b.theater.name}"
-            )
-            
-            # Store payment intent ID
-            b.payment_intent_id = intent.id
-            b.save(update_fields=["payment_intent_id"])
-            
-            return render(request, 'movies/payment.html', {
-                'client_secret': intent.client_secret,
-                'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
-                'booking': b,
-                'amount': b.theater.price,
-                'test_mode': False
-            })
-            
-        except stripe.error.StripeError as e:
-            return render(request, 'movies/payment_error.html', {'error': str(e)})
-    
+        if request.method == 'POST':
+            upi_app = request.POST.get('upi_app', 'gpay')
+            return redirect('upi_otp', booking_id=b.id, upi_app=upi_app)
+        return render(request, 'movies/upi_selection.html', {
+            'booking': b,
+            'amount': b.theater.price,
+        })
     return redirect('profile')
+
+@login_required(login_url='/login/')
+def upi_otp(request, booking_id, upi_app):
+    b = get_object_or_404(Booking, id=booking_id, user=request.user)
+    if b.status != Booking.StatusChoices.PENDING:
+        return redirect('profile')
+    
+    user_email = request.user.email or f"{request.user.username}@example.com"
+    masked_email = user_email[:3] + '***' + user_email[user_email.find('@'):]
+    
+    if request.method == 'POST':
+        return redirect('upi_scanner', booking_id=b.id)
+    
+    return render(request, 'movies/otp_verification.html', {
+        'booking': b,
+        'upi_app': upi_app,
+        'user_email': masked_email,
+    })
+
+@login_required(login_url='/login/')
+def upi_scanner(request, booking_id):
+    b = get_object_or_404(Booking, id=booking_id, user=request.user)
+    if b.status != Booking.StatusChoices.PENDING:
+        return redirect('profile')
+    
+    if request.method == 'POST':
+        return redirect('payment_success', booking_id=b.id)
+    
+    return render(request, 'movies/qr_scanner.html', {
+        'booking': b,
+        'amount': b.theater.price,
+    })
 
 @login_required(login_url='/login/')
 def payment_success(request, booking_id):
     b = get_object_or_404(Booking, id=booking_id, user=request.user)
     
-    try:
-        # Handle test mode - skip Stripe validation for mock intents
-        if settings.STRIPE_TEST_MODE and b.payment_intent_id and b.payment_intent_id.startswith('mock_intent_'):
-            # In test mode, automatically confirm the booking
-            b.status = Booking.StatusChoices.CONFIRMED
-            b.payment_status = Booking.PaymentStatus.PAID
-            b.expires_at = None
-            b.save(update_fields=["status", "payment_status", "expires_at"])
-            
-            # Send confirmation email
-            if request.user.email:
-                send_mail(
-                    subject='Booking Confirmation - BookMySeat',
-                    message=f"Dear {request.user.username},\n\nYour booking is confirmed!\n\nMovie: {b.movie.name}\nTheater: {b.theater.name}\nDate & Time: {b.theater.time}\nSeat: {b.seat.seat_number}\nAmount Paid: ₹{b.theater.price}\n\nThank you for booking with BookMySeat!",
-                    from_email=settings.EMAIL_HOST_USER,
-                    recipient_list=[request.user.email],
-                    fail_silently=True
-                )
-                
-                return render(request, 'movies/payment_success.html', {'booking': b})
+    if b.status == Booking.StatusChoices.PENDING:
+        b.status = Booking.StatusChoices.CONFIRMED
+        b.payment_status = Booking.PaymentStatus.PAID
+        b.expires_at = None
+        b.save(update_fields=["status", "payment_status", "expires_at"])
         
-        # For real payments, verify with Stripe
-        elif b.payment_intent_id:
-            intent = stripe.PaymentIntent.retrieve(b.payment_intent_id)
-            
-            if intent.status == 'succeeded':
-                # Update booking status
-                b.status = Booking.StatusChoices.CONFIRMED
-                b.payment_status = Booking.PaymentStatus.PAID
-                b.expires_at = None
-                b.save(update_fields=["status", "payment_status", "expires_at"])
-                
-                # Send confirmation email
-                if request.user.email:
-                    send_mail(
-                        subject='Booking Confirmation - BookMySeat',
-                        message=f"Dear {request.user.username},\n\nYour booking is confirmed!\n\nMovie: {b.movie.name}\nTheater: {b.theater.name}\nDate & Time: {b.theater.time}\nSeat: {b.seat.seat_number}\nAmount Paid: ₹{b.theater.price}\n\nThank you for booking with BookMySeat!",
-                        from_email=settings.EMAIL_HOST_USER,
-                        recipient_list=[request.user.email],
-                        fail_silently=True,
-                    )
-                
-                return render(request, 'movies/payment_success.html', {'booking': b})
-            else:
-                return render(request, 'movies/payment_error.html', {'error': 'Payment not completed'})
-                
-    except stripe.error.StripeError as e:
-        return render(request, 'movies/payment_error.html', {'error': str(e)})
+        if request.user.email:
+            send_mail(
+                subject='Booking Confirmation - BookMySeat',
+                message=f"Dear {request.user.username},\n\nYour booking is confirmed!\n\nMovie: {b.movie.name}\nTheater: {b.theater.name}\nDate & Time: {b.theater.time}\nSeat: {b.seat.seat_number}\nAmount Paid: ₹{b.theater.price}\n\nThank you for booking with BookMySeat!\n\nEnjoy your movie!",
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[request.user.email],
+                fail_silently=True
+            )
     
-    return redirect('profile')
+    return render(request, 'movies/payment_success_final.html', {'booking': b})
 
 @login_required(login_url='/login/')
 def cancel_booking(request, booking_id):
