@@ -35,11 +35,12 @@ BookMySeat is a full-featured Django-based movie ticket booking application that
    - Supports both youtube.com and youtu.be URLs
    - Located in: `movies/views.py` - `movie_detail()`
 
-4. **Payment Gateway (Stripe)** ✅
-   - Full Stripe PaymentIntent integration
-   - Test mode for development (no real charges)
-   - Success/failure handling with appropriate UI
-   - Located in: `movies/views.py` - `pay_booking()`, `payment_success()`
+4. **Payment Gateway (Dummy UPI Flow)** ✅
+   - Custom UPI payment flow with app selection (GPay, PhonePe, Paytm, BHIM)
+   - Dummy OTP verification page with email display
+   - QR code scanner page (simulated - doesn't actually scan)
+   - Beautiful "Happy Ending" success page with confetti animation
+   - Located in: `movies/views.py` - `pay_booking()`, `upi_otp()`, `upi_scanner()`, `payment_success()`
 
 5. **Seat Reservation Timeout** ✅
    - Seats reserved for 5 minutes during checkout
