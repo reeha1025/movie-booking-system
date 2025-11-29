@@ -5,7 +5,7 @@
   .card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; }
   .title { color: #e2e8f0; font-weight: 700; }
   .text { color: #94a3b8; }
-  .badge { background-color: #FF0000 !important; color: #fff !important; padding: 4px 8px !important; display: inline-block !important; border-radius: 4px !important; }
+  .badge { background-color: #FF0000 !important; color: #ffffff !important; padding: 6px 10px !important; display: inline-block !important; border-radius: 4px !important; font-weight: bold; font-size: 12px !important; }
 </style>
 
 <div class="container py-4">
@@ -24,9 +24,14 @@
       {% if trailer_embed_url %}
       <div class="card p-2 mb-3">
         <div class="title mb-2">Trailer</div>
-        <div class="ratio ratio-16x9">
-          <iframe src="{{ trailer_embed_url }}" title="YouTube trailer" frameborder="0" allowfullscreen></iframe>
+        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+          <iframe src="{{ trailer_embed_url }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" title="YouTube trailer" frameborder="0" allowfullscreen></iframe>
         </div>
+      </div>
+      {% else %}
+      <div class="card p-2 mb-3">
+        <div class="title mb-2">Trailer</div>
+        <p class="text">Trailer coming soon</p>
       </div>
       {% endif %}
     </div>
