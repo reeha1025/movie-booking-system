@@ -129,7 +129,7 @@
   {% endif %}
 
   <!-- Latest Releases -->
-  <div class="section-title">Latest Releases (2024–2025)</div>
+  <div class="section-title">Recommended Movies</div>
   <div class="row">
     {% for movie in latest_movies %}
     <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
@@ -146,78 +146,6 @@
     </div>
     {% empty %}
     <div class="col-12"><p class="text-muted">No recent movies.</p></div>
-    {% endfor %}
-  </div>
-
-  <!-- Telugu Picks -->
-  <div class="section-title">Telugu Picks</div>
-  <div class="row">
-    {% for movie in telugu_movies %}
-    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-      <a href="{% url 'theater_list' movie.id %}" class="text-decoration-none">
-        <div class="card h-100">
-          <img src="{{ movie.image.url }}" class="card-img-top" alt="{{ movie.name }}" />
-          <div class="card-body">
-            <h5 class="card-title">{{ movie.name }}</h5>
-            <p class="card-text">{{ movie.description }}</p>
-          </div>
-        </div>
-      </a>
-    </div>
-    {% endfor %}
-  </div>
-
-  <!-- Hindi Picks -->
-  <div class="section-title">Hindi Picks</div>
-  <div class="row">
-    {% for movie in hindi_movies %}
-    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-      <a href="{% url 'theater_list' movie.id %}" class="text-decoration-none">
-        <div class="card h-100">
-          <img src="{{ movie.image.url }}" class="card-img-top" alt="{{ movie.name }}" />
-          <div class="card-body">
-            <h5 class="card-title">{{ movie.name }}</h5>
-            <p class="card-text">{{ movie.description }}</p>
-          </div>
-        </div>
-      </a>
-    </div>
-    {% endfor %}
-  </div>
-
-  <!-- English Picks -->
-  <div class="section-title">English Picks</div>
-  <div class="row">
-    {% for movie in english_movies %}
-    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-      <a href="{% url 'theater_list' movie.id %}" class="text-decoration-none">
-        <div class="card h-100">
-          <img src="{{ movie.image.url }}" class="card-img-top" alt="{{ movie.name }}" />
-          <div class="card-body">
-            <h5 class="card-title">{{ movie.name }}</h5>
-            <p class="card-text">{{ movie.description }}</p>
-          </div>
-        </div>
-      </a>
-    </div>
-    {% endfor %}
-  </div>
-
-  <!-- Animation & Kids -->
-  <div class="section-title">Animation & Kids</div>
-  <div class="row">
-    {% for movie in kids_movies %}
-    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-      <a href="{% url 'theater_list' movie.id %}" class="text-decoration-none">
-        <div class="card h-100">
-          <img src="{{ movie.image.url }}" class="card-img-top" alt="{{ movie.name }}" />
-          <div class="card-body">
-            <h5 class="card-title">{{ movie.name }}</h5>
-            <p class="card-text">{{ movie.description }}</p>
-          </div>
-        </div>
-      </a>
-    </div>
     {% endfor %}
   </div>
 </div>
