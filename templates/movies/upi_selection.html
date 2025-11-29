@@ -70,13 +70,19 @@
         <div class="upi-options">
           <div class="upi-option" onclick="selectUPI('gpay')">
             <input type="radio" name="upi_app" value="gpay" id="gpay" style="display:none;">
-            <img src="https://www.gstatic.com/images/branding/product/1x/googlepay_64dp.png" class="upi-icon" alt="Google Pay">
+            <svg class="upi-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="32" r="32" fill="#4285F4"/>
+              <text x="32" y="36" text-anchor="middle" font-size="24" font-weight="bold" fill="white">G</text>
+            </svg>
             <div class="upi-label">Google Pay</div>
           </div>
 
           <div class="upi-option" onclick="selectUPI('phonepe')">
             <input type="radio" name="upi_app" value="phonepe" id="phonepe" style="display:none;">
-            <img src="https://phonepe.com/webin/static/assets/logo/logo_dark.svg" class="upi-icon" alt="PhonePe">
+            <svg class="upi-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <rect width="64" height="64" fill="#5F4B8B"/>
+              <text x="32" y="36" text-anchor="middle" font-size="20" font-weight="bold" fill="white">PP</text>
+            </svg>
             <div class="upi-label">PhonePe</div>
           </div>
 
