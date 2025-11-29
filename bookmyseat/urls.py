@@ -4,11 +4,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from movies.views import analytics_dashboard
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('secure-admin-panel-bms2025/', admin.site.urls),
     path('users/', include('users.urls')),
     path('',include('users.urls')),
     path('movies/', include('movies.urls')),
-    path('admin/analytics/', analytics_dashboard, name='analytics_dashboard'),
+    path('secure-analytics-bms2025/', analytics_dashboard, name='analytics_dashboard'),
 ]
 
 if settings.DEBUG:

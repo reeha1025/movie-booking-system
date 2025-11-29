@@ -7,13 +7,8 @@ BookMySeat is a full-featured Django-based movie ticket booking application that
 
 ### Production URLs
 - **Website**: https://1068fbf9-4d7f-4817-9cc8-18e5a2a2a74b-00-9a8kaybjn0dz.pike.replit.dev/
-- **Admin Panel**: https://1068fbf9-4d7f-4817-9cc8-18e5a2a2a74b-00-9a8kaybjn0dz.pike.replit.dev/admin/
-- **Analytics Dashboard**: https://1068fbf9-4d7f-4817-9cc8-18e5a2a2a74b-00-9a8kaybjn0dz.pike.replit.dev/admin/analytics/
 
-### Admin Login Credentials
-- **Username**: admin
-- **Password**: admin123
-- **Email**: admin@example.com
+**Note**: Admin panel and analytics are hidden for security. Please contact the project owner for access credentials.
 
 ## Project Architecture
 
@@ -70,7 +65,7 @@ BookMySeat is a full-featured Django-based movie ticket booking application that
    - Total revenue from confirmed bookings
    - Top 10 most popular movies by booking count
    - Top 10 busiest theaters by booking count
-   - Access at: `/admin/analytics/` (requires admin login)
+   - Access at: Hidden secure URL (requires admin login)
    - Located in: `movies/views.py` - `analytics_dashboard()`
 
 ### Other Features
@@ -117,12 +112,11 @@ The deployment is configured with:
 
 ## Admin Access
 
-### Admin Panel
-Access at `/admin/` to manage:
-- Movies and theaters
-- Bookings and payments
-- Users
-- Analytics dashboard at `/admin/analytics/`
+**Admin panel is hidden for security purposes.**
+
+**Hidden Admin URLs** (not shared publicly):
+- Admin Panel: `/secure-admin-panel-bms2025/`
+- Analytics: `/secure-analytics-bms2025/`
 
 ### Creating Additional Superusers
 ```bash
