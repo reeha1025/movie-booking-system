@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect ,get_object_or_404
-from .models import Movie,Theater,Seat,Booking
+from .models import Movie,Theater,Seat,Booking  # type: ignore
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.utils import timezone
