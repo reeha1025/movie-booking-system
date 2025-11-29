@@ -1,16 +1,12 @@
 # BookMySeat - Movie Ticket Booking System 🎬
 
-A full-featured Django-based movie ticket booking application with user authentication, seat selection, payment processing, and an admin analytics dashboard.
+A full-featured Django-based movie ticket booking application with user authentication, seat selection, UPI payment processing, and email confirmations.
 
 ## 🚀 Live Demo
 
-- **Website**: https://1068fbf9-4d7f-4817-9cc8-18e5a2a2a74b-00-9a8kaybjn0dz.pike.replit.dev/
-- **Admin Panel**: https://1068fbf9-4d7f-4817-9cc8-18e5a2a2a74b-00-9a8kaybjn0dz.pike.replit.dev/admin/
-- **Analytics**: https://1068fbf9-4d7f-4817-9cc8-18e5a2a2a74b-00-9a8kaybjn0dz.pike.replit.dev/admin/analytics/
+**Website**: https://1068fbf9-4d7f-4817-9cc8-18e5a2a2a74b-00-9a8kaybjn0dz.pike.replit.dev/
 
-### Admin Login
-- **Username**: `admin`
-- **Password**: `admin123`
+Visit the link above to browse movies, select seats, and book tickets!
 
 ## ✨ Features
 
@@ -22,37 +18,33 @@ A full-featured Django-based movie ticket booking application with user authenti
 ### 2. Ticket Email Confirmation ✅
 - Automatic email confirmation after successful payment
 - Includes: Movie name, theater, showtime, seat number, and amount
-- Email mask for privacy
 
 ### 3. Movie Trailers ✅
 - YouTube trailer embeds on movie detail pages
 - Support for multiple URL formats
-- 6 movies with working trailers
 
-### 4. Custom UPI Payment Flow ✅
-- 4 UPI app options: Google Pay, PhonePe, Paytm, BHIM
+### 4. UPI Payment Flow ✅
+- 2 UPI app options: Google Pay, PhonePe
 - Dummy OTP verification page
 - QR code scanner simulation
 - Beautiful success page with confetti animation
-- **Green color scheme** (#10B981) throughout payment flow
+- Green color scheme (#10B981) throughout payment flow
 
 ### 5. Seat Reservation Timeout ✅
 - 5-minute automatic seat reservation
 - Expired reservations automatically released
 - Prevents indefinite seat holds
 
-### 6. Admin Analytics Dashboard ✅
-- Total revenue from confirmed bookings
-- Top 10 most popular movies by booking count
-- Top 10 busiest theaters by booking count
-- Accessible at `/admin/analytics/`
+### 6. Email Notifications ✅
+- Booking confirmations sent to user email
+- Order details included in confirmation
 
 ## 🛠 Technology Stack
 
 - **Backend**: Django 5.2.8
 - **Database**: SQLite (development), PostgreSQL (production)
 - **Frontend**: Django Templates + Bootstrap 5
-- **Payment**: Custom UPI Flow (Dummy)
+- **Payment**: Custom UPI Flow
 - **Deployment**: Gunicorn on Replit
 - **Media**: Pillow for image processing
 
@@ -115,34 +107,15 @@ pip install -r requirements.txt
 python manage.py migrate
 ```
 
-5. **Create admin user**
-```bash
-python manage.py createsuperuser
-```
-
-6. **Run development server**
+5. **Run development server**
 ```bash
 python manage.py runserver 0.0.0.0:5000
 ```
 
-7. **Access application**
-- Website: http://localhost:5000
-- Admin: http://localhost:5000/admin
-- Analytics: http://localhost:5000/admin/analytics
-
-## 📊 Database
-
-### Current Statistics
-- **Movies**: 10 movies (6 with trailers)
-- **Theaters**: 484 locations
-- **Bookings**: 23 total (8 confirmed)
-- **Admin Users**: 4 superusers
-
-### Models
-- **Movie**: Movie details, genre, language, trailers
-- **Theater**: Theater location, showtime, format, price
-- **Seat**: Seat allocation per theater
-- **Booking**: User bookings with status and payment tracking
+6. **Access application**
+```
+Website: http://localhost:5000
+```
 
 ## 🎨 Design Features
 
@@ -150,7 +123,6 @@ python manage.py runserver 0.0.0.0:5000
 - **Black Navbar**: BookMyShow logo branding
 - **Green Payments**: #10B981 color scheme for payment elements
 - **Mobile Responsive**: Works on all devices
-- **White Badges**: Year badges with bright white (#ffffff) text
 - **Smooth Animations**: Confetti on successful payment
 
 ## 🔒 Security
@@ -160,7 +132,6 @@ python manage.py runserver 0.0.0.0:5000
 - Password hashing
 - SQL injection protection via Django ORM
 - XSS protection in templates
-- Admin login required for analytics
 
 ## 📝 Environment Variables
 
@@ -224,14 +195,9 @@ Edit `templates/movies/upi_selection.html` and `templates/movies/payment_success
 - Current color: #10B981 (Green)
 - Change to any hex color
 
-### Add New Admin Users
-```bash
-python manage.py createsuperuser
-```
-
 ## ⚠️ Known Limitations
 
-- Single theater per showing (no multi-theater support)
+- Single theater per showing
 - No booking modification after creation
 - UPI payment flow is simulated (dummy payment)
 - Email backend uses console in development
@@ -244,48 +210,11 @@ python manage.py createsuperuser
 - [ ] Multi-language UI
 - [ ] Social media integration
 - [ ] Gift cards and promotions
-- [ ] Advanced reporting
 
 ## 📄 License
 
-This project is open source and available under the MIT License.
+MIT License - feel free to use this project for your own purposes!
 
-## 👨‍💼 Admin Panel
+## 👨‍💻 Author
 
-Access admin features at `/admin/`:
-- Manage movies and theaters
-- View and manage bookings
-- Manage users
-- View analytics dashboard
-
-**Admin Credentials**:
-- Username: `admin`
-- Password: `admin123`
-
-## 🤝 Contributing
-
-Contributions are welcome! To contribute:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📞 Support
-
-For issues or questions:
-- Open an issue on GitHub
-- Contact: admin@bookmyseat.com
-
-## 🎓 Learning Resources
-
-- [Django Documentation](https://docs.djangoproject.com/)
-- [Bootstrap Documentation](https://getbootstrap.com/docs/)
-- [Django REST Framework](https://www.django-rest-framework.org/)
-
----
-
-**Built with ❤️ using Django and Bootstrap**
-
-**Last Updated**: November 29, 2025 - Final Project Release
+Built with ❤️ for movie lovers worldwide.
