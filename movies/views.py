@@ -238,10 +238,15 @@ def movie_detail(request, movie_id):
         try:
             from urllib.parse import urlparse, parse_qs
             u = urlparse(movie.trailer_url)
-            if 'youtube.com' in u.netloc:
+            # If already an embed URL, use it directly
+            if 'youtube.com/embed/' in movie.trailer_url:
+                embed = movie.trailer_url
+            # Parse watch URL format
+            elif 'youtube.com' in u.netloc:
                 v = parse_qs(u.query).get('v', [''])[0]
                 if v:
                     embed = f'https://www.youtube.com/embed/{v}'
+            # Parse short URL format
             elif 'youtu.be' in u.netloc:
                 vid = u.path.strip('/')
                 if vid:
