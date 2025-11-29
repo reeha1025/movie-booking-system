@@ -26,7 +26,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'unsafe-dev-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.vercel.app', '.replit.dev', '.replit.app', '*']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.vercel.app', '.replit.dev', '.replit.app', '.repl.co']
 
 # CSRF trusted origins for hosted previews (adjust as needed)
 CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app', 'https://*.replit.dev', 'https://*.replit.app']
