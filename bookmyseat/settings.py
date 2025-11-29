@@ -55,6 +55,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Cache control headers to prevent caching
+SECURE_HSTS_SECONDS = 0
+SESSION_CACHE_ALIAS = 'default'
+
 AUTH_USER_MODEL='auth.User'
 EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'
 
