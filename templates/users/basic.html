@@ -30,9 +30,18 @@
       .navbar-brand {
         color: #000 !important;
         font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
       .navbar-brand img {
         height: 40px;
+      }
+      .navbar-brand-text {
+        font-size: 18px;
+        font-weight: bold;
+        color: #000 !important;
+        white-space: nowrap;
       }
       .navbar-nav .nav-link {
         color: #000;
@@ -198,7 +207,8 @@
             height="40"
             width="auto"
           />
-          <span class="badge badge-primary" style="background-color: #0066ff !important; color: white; margin-left: 8px; font-size: 10px;">NEW</span>
+          <span class="navbar-brand-text">BookMyShow</span>
+          <span class="badge badge-primary" style="background-color: #0066ff !important; color: white; font-size: 10px;">NEW</span>
         </a>
         <button
           class="navbar-toggler"
