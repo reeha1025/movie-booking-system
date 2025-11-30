@@ -29,12 +29,55 @@ Browse movies, select seats, and complete demo bookings!
 ## 📦 Project Structure
 
 ```
-bookmyseat/          # Main Django project
-movies/              # Movie and booking app
-users/               # User authentication app
-templates/           # HTML templates
-static/              # CSS, JS, images
-media/               # Movie posters
+movie-booking-system/
+│
+├── README.md                          # Project documentation
+├── requirements.txt                   # Python dependencies
+├── manage.py                          # Django management script
+│
+├── bookmyseat/                        # Main Django project settings
+│   ├── settings.py                    # Django configuration
+│   ├── urls.py                        # Root URL routing
+│   └── wsgi.py                        # WSGI entry point
+│
+├── movies/                            # Movie & Booking app
+│   ├── migrations/                    # Database migrations
+│   ├── templates/movies/              # Movie-related templates
+│   │   ├── movie_list.html
+│   │   ├── movie_detail.html
+│   │   ├── seat_selection.html
+│   │   ├── upi_selection.html
+│   │   ├── otp_verification.html
+│   │   ├── qr_scanner.html
+│   │   └── payment_success_final.html
+│   ├── models.py                      # Database models
+│   ├── views.py                       # View logic
+│   └── urls.py                        # App URL routing
+│
+├── users/                             # User authentication app
+│   ├── migrations/
+│   ├── templates/users/               # Auth templates
+│   │   ├── login.html
+│   │   ├── register.html
+│   │   ├── profile.html
+│   │   └── basic.html                 # Base template
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   └── forms.py
+│
+├── templates/                         # Global templates
+│   └── base.html                      # Base template
+│
+├── static/                            # Global static files
+│   ├── css/
+│   ├── js/
+│   └── images/
+│
+├── media/                             # Movie posters
+│   └── movies/
+│
+└── db.sqlite3                         # SQLite database
 ```
 
 ## 🎨 Design Features
