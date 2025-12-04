@@ -23,7 +23,29 @@ RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
 
 ALLOWED_HOSTS = [
     "localhost",
-    "12
+    "127.0.0.1",
+]
+
+# Add Render host automatically
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+# ==========================
+# APPLICATION DEFINITION
+# ==========================
+
+INSTALLED_APPS = [
+    # your apps…
+]
+
+MIDDLEWARE = [
+    # your middleware…
+]
+
+ROOT_URLCONF = "bookmyseat.urls"
+
+WSGI_APPLICATION = "bookmyseat.wsgi.application"   # ✅ FIXED
+
 
 
 
