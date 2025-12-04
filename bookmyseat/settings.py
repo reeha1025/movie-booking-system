@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ Add Whitenoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -105,15 +106,18 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # for deployment
 
-# Optional: serve static files during development
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+
+# Use Whitenoise for serving static files in production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ==========================
 # DEFAULT PRIMARY KEY
 # ==========================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 
 
