@@ -1,1 +1,2 @@
-web: gunicorn moviebooking.wsgi:application
+web: gunicorn bookmyseat.wsgi:application
+
