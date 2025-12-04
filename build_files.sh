@@ -6,9 +6,9 @@ echo "Building Django application for production..."
 pip install -r requirements.txt
 
 # Collect static files
-python manage.py collectstatic --noinput --settings=bookmyseat.settings_production
+python manage.py collectstatic --noinput
 
 # Run migrations
-python manage.py migrate --settings=bookmyseat.settings_production
+python manage.py migrate --noinput
 
 echo "Build completed successfully!"
