@@ -1,39 +1,22 @@
-"""
-Django settings for bookmyseat project.
-"""
-
 from pathlib import Path
 import os
 import dj_database_url
 
-# -------------------------------
-# BASE DIRECTORY
-# -------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# -------------------------------
-# SECURITY
-# -------------------------------
 SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
 
-# -------------------------------
-# ALLOWED HOSTS
-# -------------------------------
 ALLOWED_HOSTS = [
     ".vercel.app",
     "127.0.0.1",
     "localhost",
 ]
 
-# Allow custom domain from Vercel
 VERCEL_URL = os.environ.get("VERCEL_URL")
 if VERCEL_URL:
     ALLOWED_HOSTS.append(VERCEL_URL)
 
-# -------------------------------
-# INSTALLED APPS
-# -------------------------------
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -44,11 +27,9 @@ INSTALLED_APPS = [
 
     # Your apps
     "movies",
+    "users",   # ✅ FIX: Add this
 ]
 
-# -------------------------------
-# MIDDLEWARE
-# -------------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -60,14 +41,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# -------------------------------
-# URL CONFIG
-# -------------------------------
 ROOT_URLCONF = "bookmyseat.urls"
 
-# -------------------------------
-# TEMPLATES
-# -------------------------------
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -84,25 +59,22 @@ TEMPLATES = [
     },
 ]
 
-# -------------------------------
-# WSGI
-# -------------------------------
 WSGI_APPLICATION = "bookmyseat.wsgi.application"
 
-# -------------------------------
-# DATABASE (PostgreSQL on Vercel)
-# -------------------------------
+# -----------------------------
+# DATABASE FIX
+# -----------------------------
 DATABASES = {
     "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
+        default="sqlite:///db.sqlite3",  # ✅ Safe fallback
         conn_max_age=600,
-        ssl_require=True,
+        ssl_require=False
     )
 }
 
-# -------------------------------
-# PASSWORD VALIDATION
-# -------------------------------
+# -----------------------------
+# PASSWORDS
+# -----------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -110,28 +82,28 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# -------------------------------
-# INTERNATIONALIZATION
-# -------------------------------
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# -------------------------------
-# STATIC FILES
-# -------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# 🔥 Fix Vercel static folder crash
+if os.path.exists(BASE_DIR / "static"):
+    STATICFILES_DIRS = [BASE_DIR / "static"]
+else:
+    STATICFILES_DIRS = []
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# -------------------------------
-# STRIPE — IMPORTANT (fixes your 500 error)
-# -------------------------------
+# -----------------------------
+# STRIPE FIX
+# -----------------------------
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
+
 
 
 
