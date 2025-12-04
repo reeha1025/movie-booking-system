@@ -1,12 +1,25 @@
+"""
+Django settings for bookmyseat project.
+"""
+
 from pathlib import Path
 import os
 import dj_database_url
 
+# -------------------------------
+# BASE DIRECTORY
+# -------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# -------------------------------
+# SECURITY
+# -------------------------------
 SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
 
+# -------------------------------
+# ALLOWED HOSTS
+# -------------------------------
 ALLOWED_HOSTS = [
     ".vercel.app",
     "127.0.0.1",
@@ -17,7 +30,11 @@ VERCEL_URL = os.environ.get("VERCEL_URL")
 if VERCEL_URL:
     ALLOWED_HOSTS.append(VERCEL_URL)
 
+# -------------------------------
+# INSTALLED APPS
+# -------------------------------
 INSTALLED_APPS = [
+    # Django default apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -27,12 +44,15 @@ INSTALLED_APPS = [
 
     # Your apps
     "movies",
-    "users",   # ✅ FIX: Add this
+    "users",
 ]
 
+# -------------------------------
+# MIDDLEWARE
+# -------------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -41,8 +61,14 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# -------------------------------
+# ROOT URLS
+# -------------------------------
 ROOT_URLCONF = "bookmyseat.urls"
 
+# -------------------------------
+# TEMPLATES
+# -------------------------------
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -59,22 +85,25 @@ TEMPLATES = [
     },
 ]
 
+# -------------------------------
+# WSGI
+# -------------------------------
 WSGI_APPLICATION = "bookmyseat.wsgi.application"
 
-# -----------------------------
-# DATABASE FIX
-# -----------------------------
+# -------------------------------
+# DATABASE (PostgreSQL for Vercel / SQLite fallback for local)
+# -------------------------------
 DATABASES = {
     "default": dj_database_url.config(
-        default="sqlite:///db.sqlite3",  # ✅ Safe fallback
+        default=os.environ.get("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
         conn_max_age=600,
-        ssl_require=False
+        ssl_require=True
     )
 }
 
-# -----------------------------
-# PASSWORDS
-# -----------------------------
+# -------------------------------
+# PASSWORD VALIDATION
+# -------------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -82,15 +111,21 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# -------------------------------
+# INTERNATIONALIZATION
+# -------------------------------
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
+# -------------------------------
+# STATIC FILES (CSS, JS, Images)
+# -------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# 🔥 Fix Vercel static folder crash
+# Only add STATICFILES_DIRS if the folder exists
 if os.path.exists(BASE_DIR / "static"):
     STATICFILES_DIRS = [BASE_DIR / "static"]
 else:
@@ -98,11 +133,17 @@ else:
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# -----------------------------
-# STRIPE FIX
-# -----------------------------
+# -------------------------------
+# DEFAULT AUTO FIELD
+# -------------------------------
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# -------------------------------
+# STRIPE KEYS (Set in Vercel Environment Variables)
+# -------------------------------
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
+
 
 
 
