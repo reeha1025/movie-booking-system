@@ -12,4 +12,7 @@ urlpatterns = [
     path('bookings/<int:booking_id>/scanner/', views.upi_scanner, name='upi_scanner'),
     path('bookings/<int:booking_id>/payment-success/', views.payment_success, name='payment_success'),
     path('bookings/<int:booking_id>/cancel/', views.cancel_booking, name='cancel_booking'),
+    path('add-theaters/', views.add_theaters_view, name='add_theaters'),  # ✅ Added temporary view
 ]
+
+
