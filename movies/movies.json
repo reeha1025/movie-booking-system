@@ -1,0 +1,77 @@
+[
+  {
+    "model": "movies.movie",
+    "pk": 1,
+    "fields": {
+      "name": "Aquaman and the Lost Kingdom",
+      "image": "https://image.tmdb.org/t/p/original/cj2gWN3lSCxKpZfK1KKknoCFPxv.jpg",
+      "rating": "6.5",
+      "cast": "Jason Momoa, Patrick Wilson, Amber Heard",
+      "description": "Arthur Curry must protect Atlantis from new threats.",
+      "genre": "Action",
+      "language": "English",
+      "release_year": 2023,
+      "trailer_url": "https://www.youtube.com/watch?v=UGc5Tzz19UY"
+    }
+  },
+  {
+    "model": "movies.movie",
+    "pk": 2,
+    "fields": {
+      "name": "Salaar",
+      "image": "https://image.tmdb.org/t/p/original/qRqltqMKrHqYnYqNl2Qc9RlaK5r.jpg",
+      "rating": "7.8",
+      "cast": "Prabhas, Prithviraj Sukumaran, Shruti Haasan",
+      "description": "A gang leader makes a promise to a dying friend.",
+      "genre": "Action",
+      "language": "Telugu",
+      "release_year": 2023,
+      "trailer_url": "https://www.youtube.com/watch?v=EFA7ZrJcP9U"
+    }
+  },
+  {
+    "model": "movies.movie",
+    "pk": 3,
+    "fields": {
+      "name": "Hanuman",
+      "image": "https://image.tmdb.org/t/p/original/s0kzfvzsxwFJ8LNk31vr0cHL1Zp.jpg",
+      "rating": "8.0",
+      "cast": "Teja Sajja, Amritha Aiyer",
+      "description": "A boy gains superpowers from Lord Hanuman.",
+      "genre": "Fantasy",
+      "language": "Telugu",
+      "release_year": 2024,
+      "trailer_url": "https://www.youtube.com/watch?v=aj0QT2gLgXA"
+    }
+  },
+  {
+    "model": "movies.movie",
+    "pk": 4,
+    "fields": {
+      "name": "Fighter",
+      "image": "https://image.tmdb.org/t/p/original/ve3qvHGbq6uHknLz76gxg1p09jt.jpg",
+      "rating": "7.0",
+      "cast": "Hrithik Roshan, Deepika Padukone",
+      "description": "Elite Indian Air Force pilots take on terrorism.",
+      "genre": "Action",
+      "language": "Hindi",
+      "release_year": 2024,
+      "trailer_url": "https://www.youtube.com/watch?v=2Rxoz13Bthc"
+    }
+  },
+  {
+    "model": "movies.movie",
+    "pk": 5,
+    "fields": {
+      "name": "Dunki",
+      "image": "https://image.tmdb.org/t/p/original/dtXZOYNtQiyvS20nO5D4evr0Rvr.jpg",
+      "rating": "6.8",
+      "cast": "Shah Rukh Khan, Taapsee Pannu",
+      "description": "A group dreams of moving abroad through backdoor migration.",
+      "genre": "Comedy",
+      "language": "Hindi",
+      "release_year": 2023,
+      "trailer_url": "https://www.youtube.com/watch?v=VXf8vPl6Ypw"
+    }
+  }
+]
