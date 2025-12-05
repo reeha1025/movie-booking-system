@@ -1,13 +1,14 @@
-import os
+from pathlib import Path
 import sys
+import os
 
-# Add project root to path
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+# Add your project root to sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.append(str(PROJECT_ROOT))
 
-# Set Django settings
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "movie_booking_system.settings")
+# Set DJANGO_SETTINGS_MODULE correctly
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "bookmyseat.settings")
 
-# WSGI handler for Vercel
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
