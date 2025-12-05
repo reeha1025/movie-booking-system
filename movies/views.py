@@ -307,6 +307,15 @@ def load_movies(request):
         return HttpResponse("Movies loaded successfully!")
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}")
+        from django.http import HttpResponse
+from django.core.management import call_command
+from django.contrib.admin.views.decorators import staff_member_required
+
+@staff_member_required
+def add_theaters_view(request):
+    call_command('add_theaters')
+    return HttpResponse("Theaters added successfully!")
+
 
 
 
