@@ -357,6 +357,32 @@ def create_temp_admin(request):
         password="TempAdmin123"
     )
     return HttpResponse("Temporary admin created. Use username: tempadmin, password: TempAdmin123")
+    def send_booking_email(user, booking):
+    subject = "🎬 Ticket Confirmation - BookMySeat"
+
+    message = f"""
+Hello {user.username},
+
+Your movie ticket is confirmed! 🎉
+
+Movie: {booking.movie.name}
+Theater: {booking.theater.name}
+Show Time: {booking.theater.time.strftime('%d %b %Y, %I:%M %p')}
+Seat No: {booking.seat.seat_number}
+Amount Paid: ₹{booking.theater.price}
+
+Enjoy your movie! 🍿
+Thank you for booking with BookMySeat.
+"""
+
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=True
+    )
+
 
 
 
