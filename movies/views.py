@@ -92,11 +92,25 @@ def theater_list(request, movie_id):
     return render(request, 'movies/theater_list.html', {'movie': movie, 'theaters': theaters})
 
 
+# ----------------- RELEASE EXPIRED BOOKINGS -----------------
+def release_expired_bookings():  # UPDATED
+    expired = Booking.objects.filter(status=Booking.StatusChoices.PENDING,
+                                     expires_at__lt=timezone.now())
+    for b in expired.select_related('seat'):
+        if b.seat:
+            b.seat.is_booked = False
+            b.seat.save(update_fields=["is_booked"])
+        b.status = Booking.StatusChoices.CANCELLED
+        b.payment_status = Booking.PaymentStatus.REFUNDED
+        b.expires_at = None
+        b.save(update_fields=["status", "payment_status", "expires_at"])
+
+
 # ----------------- BOOK SEATS -----------------
 @login_required(login_url='/login/')
 def book_seats(request, theater_id):
     theater = get_object_or_404(Theater, id=theater_id)
-    release_expired_bookings(request.user)
+    release_expired_bookings()  # UPDATED
     seats = Seat.objects.filter(theater=theater)
 
     if request.method == 'POST':
@@ -127,7 +141,7 @@ def book_seats(request, theater_id):
                         theater=theater,
                         status=Booking.StatusChoices.PENDING,
                         payment_status=Booking.PaymentStatus.PENDING,
-                        expires_at=timezone.now() + timedelta(minutes=5)
+                        expires_at=timezone.now() + timedelta(minutes=5)  # UPDATED
                     )
                     seat.is_booked = True
                     seat.save(update_fields=["is_booked"])
@@ -144,31 +158,18 @@ def book_seats(request, theater_id):
     return render(request, 'movies/seat_selection.html', {'theater': theater, "seats": seats})
 
 
-# ----------------- RELEASE EXPIRED -----------------
-def release_expired_bookings(user):
-    expired = Booking.objects.filter(user=user, status=Booking.StatusChoices.PENDING,
-                                     expires_at__lt=timezone.now())
-    for b in expired.select_related('seat'):
-        if b.seat:
-            b.seat.is_booked = False
-            b.seat.save(update_fields=["is_booked"])
-        b.status = Booking.StatusChoices.CANCELLED
-        b.payment_status = Booking.PaymentStatus.REFUNDED
-        b.save(update_fields=["status", "payment_status"])
-
-
 # ----------------- CHECKOUT -----------------
 @login_required(login_url='/login/')
 def checkout(request, theater_id):
     theater = get_object_or_404(Theater, id=theater_id)
-    release_expired_bookings(request.user)
+    release_expired_bookings()  # UPDATED
     bookings = Booking.objects.filter(user=request.user, theater=theater,
                                       status=Booking.StatusChoices.PENDING).select_related('seat')
     total = sum([theater.price for _ in bookings])
     return render(request, 'movies/checkout.html', {'theater': theater, 'bookings': bookings, 'total': total})
 
 
-# ----------------- DUMMY PAYMENT FLOW -----------------
+# ----------------- PAYMENT FLOW (DUMMY) -----------------
 @login_required(login_url='/login/')
 def pay_booking(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
@@ -217,7 +218,7 @@ def payment_success(request, booking_id):
     if booking.status == Booking.StatusChoices.PENDING:
         booking.status = Booking.StatusChoices.CONFIRMED
         booking.payment_status = Booking.PaymentStatus.PAID
-        booking.expires_at = None
+        booking.expires_at = None  # UPDATED
         booking.save(update_fields=["status", "payment_status", "expires_at"])
 
         if request.user.email:
@@ -254,7 +255,8 @@ def cancel_booking(request, booking_id):
             booking.seat.save(update_fields=["is_booked"])
         booking.status = Booking.StatusChoices.CANCELLED
         booking.payment_status = Booking.PaymentStatus.REFUNDED
-        booking.save(update_fields=["status", "payment_status"])
+        booking.expires_at = None
+        booking.save(update_fields=["status", "payment_status", "expires_at"])
     return redirect('profile')
 
 
@@ -331,7 +333,9 @@ def add_theaters_view(request):
                     theater.seats.create(seat_number=f"S{s:02}")
 
     return HttpResponse("3 theaters added for each movie successfully!")
-    # ----------------- RUN MIGRATIONS TEMPORARY -----------------
+
+
+# ----------------- RUN MIGRATIONS TEMPORARY -----------------
 @staff_member_required
 def run_migrations(request):
     try:
@@ -339,10 +343,11 @@ def run_migrations(request):
         return HttpResponse("Migrations ran successfully!")
     except Exception as e:
         return HttpResponse(f"Error running migrations: {str(e)}")
-        from django.contrib.auth.models import User
+
+
+from django.contrib.auth.models import User
 
 def create_temp_admin(request):
-    # WARNING: Remove this after use
     if User.objects.filter(username="tempadmin").exists():
         return HttpResponse("Temp admin already exists.")
 
@@ -352,13 +357,7 @@ def create_temp_admin(request):
         password="TempAdmin123"
     )
     return HttpResponse("Temporary admin created. Use username: tempadmin, password: TempAdmin123")
-    @staff_member_required
-def run_migrations(request):
-    try:
-        call_command("migrate")
-        return HttpResponse("Migrations ran successfully!")
-    except Exception as e:
-        return HttpResponse(f"Error running migrations: {str(e)}")
+
 
 
 
