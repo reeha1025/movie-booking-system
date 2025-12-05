@@ -3,17 +3,19 @@ from .models import Movie, Theater, Seat, Booking
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 from django.core.mail import send_mail
 from django.contrib.admin.views.decorators import staff_member_required
-from django.core.management import call_command
 from django.http import HttpResponse
+from django.core.management import call_command
+import random
 import stripe
 from django.conf import settings
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
+# ----------------- MOVIE LIST -----------------
 def movie_list(request):
     search_query = request.GET.get('search')
     language = request.GET.get('language')
@@ -52,221 +54,7 @@ def movie_list(request):
     })
 
 
-def theater_list(request, movie_id):
-    movie = get_object_or_404(Movie, id=movie_id)
-    theater = Theater.objects.filter(movie=movie)
-    return render(request, 'movies/theater_list.html', {'movie': movie, 'theaters': theater})
-
-
-@login_required(login_url='/login/')
-def book_seats(request, theater_id):
-    theaters = get_object_or_404(Theater, id=theater_id)
-    release_expired_bookings(request.user)
-    seats = Seat.objects.filter(theater=theaters)
-
-    if request.method == 'POST':
-        selected_Seats = request.POST.getlist('seats')
-        error_seats = []
-
-        if not selected_Seats:
-            return render(
-                request,
-                "movies/seat_selection.html",
-                {'theaters': theaters, "seats": seats, 'error': "No seat selected"}
-            )
-
-        with transaction.atomic():
-            for seat_id in selected_Seats:
-                try:
-                    seat = Seat.objects.select_for_update().get(id=seat_id, theater=theaters)
-                except Seat.DoesNotExist:
-                    error_seats.append(f"#{seat_id}")
-                    continue
-
-                if seat.is_booked:
-                    error_seats.append(seat.seat_number)
-                    continue
-
-                try:
-                    b = Booking.objects.create(
-                        user=request.user,
-                        seat=seat,
-                        movie=theaters.movie,
-                        theater=theaters,
-                        status=Booking.StatusChoices.PENDING,
-                        payment_status=Booking.PaymentStatus.PENDING,
-                        expires_at=timezone.now() + timedelta(minutes=5)
-                    )
-                    seat.is_booked = True
-                    seat.save(update_fields=["is_booked"])
-                except IntegrityError:
-                    error_seats.append(seat.seat_number)
-
-        if error_seats:
-            error_message = f"The following seats are already booked: {', '.join(error_seats)}"
-            return render(
-                request,
-                'movies/seat_selection.html',
-                {'theaters': theaters, "seats": seats, 'error': error_message}
-            )
-
-        return redirect('checkout', theater_id=theaters.id)
-
-    return render(request, 'movies/seat_selection.html', {'theaters': theaters, "seats": seats})
-
-
-def release_expired_bookings(user):
-    expired = Booking.objects.filter(user=user, status=Booking.StatusChoices.PENDING, expires_at__lt=timezone.now())
-    for b in expired.select_related('seat'):
-        if b.seat:
-            b.seat.is_booked = False
-            b.seat.save(update_fields=["is_booked"])
-        b.status = Booking.StatusChoices.CANCELLED
-        b.payment_status = Booking.PaymentStatus.REFUNDED
-        b.save(update_fields=["status", "payment_status"])
-
-
-@login_required(login_url='/login/')
-def checkout(request, theater_id):
-    theaters = get_object_or_404(Theater, id=theater_id)
-    release_expired_bookings(request.user)
-    bookings = Booking.objects.filter(user=request.user, theater=theaters, status=Booking.StatusChoices.PENDING).select_related('seat')
-    total = sum([theaters.price for _ in bookings])
-    return render(request, 'movies/checkout.html', {'theaters': theaters, 'bookings': bookings, 'total': total})
-
-
-@login_required(login_url='/login/')
-def pay_booking(request, booking_id):
-    b = get_object_or_404(Booking, id=booking_id, user=request.user)
-    if b.status == Booking.StatusChoices.PENDING:
-        if request.method == 'POST':
-            upi_app = request.POST.get('upi_app', 'gpay')
-            return redirect('upi_otp', booking_id=b.id, upi_app=upi_app)
-        return render(request, 'movies/upi_selection.html', {
-            'booking': b,
-            'amount': b.theater.price,
-        })
-    return redirect('profile')
-
-
-@login_required(login_url='/login/')
-def upi_otp(request, booking_id, upi_app):
-    b = get_object_or_404(Booking, id=booking_id, user=request.user)
-    if b.status != Booking.StatusChoices.PENDING:
-        return redirect('profile')
-
-    user_email = request.user.email or f"{request.user.username}@example.com"
-    masked_email = user_email[:3] + '***' + user_email[user_email.find('@'):]
-
-    if request.method == 'POST':
-        return redirect('upi_scanner', booking_id=b.id)
-
-    return render(request, 'movies/otp_verification.html', {
-        'booking': b,
-        'upi_app': upi_app,
-        'user_email': masked_email,
-    })
-
-
-@login_required(login_url='/login/')
-def upi_scanner(request, booking_id):
-    b = get_object_or_404(Booking, id=booking_id, user=request.user)
-    if b.status != Booking.StatusChoices.PENDING:
-        return redirect('profile')
-
-    if request.method == 'POST':
-        return redirect('payment_success', booking_id=b.id)
-
-    return render(request, 'movies/qr_scanner.html', {
-        'booking': b,
-        'amount': b.theater.price,
-    })
-
-
-@login_required(login_url='/login/')
-def payment_success(request, booking_id):
-    b = get_object_or_404(Booking, id=booking_id, user=request.user)
-
-    if b.status == Booking.StatusChoices.PENDING:
-        b.status = Booking.StatusChoices.CONFIRMED
-        b.payment_status = Booking.PaymentStatus.PAID
-        b.expires_at = None
-        b.save(update_fields=["status", "payment_status", "expires_at"])
-
-        if request.user.email:
-            send_mail(
-                subject='Booking Confirmation - BookMySeat',
-                message=f"""
-Dear {request.user.username},
-
-Your booking is confirmed!
-
-Movie: {b.movie.name}
-Theater: {b.theater.name}
-Date & Time: {b.theater.time}
-Seat: {b.seat.seat_number}
-Amount Paid: ₹{b.theater.price}
-
-Thank you for booking with BookMySeat!
-Enjoy your movie!
-""",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[request.user.email],
-                fail_silently=True
-            )
-
-    return render(request, 'movies/payment_success_final.html', {'booking': b})
-
-
-@login_required(login_url='/login/')
-def cancel_booking(request, booking_id):
-    b = get_object_or_404(Booking, id=booking_id, user=request.user)
-    if b.status == Booking.StatusChoices.PENDING:
-        if b.seat:
-            b.seat.is_booked = False
-            b.seat.save(update_fields=["is_booked"])
-        b.status = Booking.StatusChoices.CANCELLED
-        b.payment_status = Booking.PaymentStatus.REFUNDED
-        b.save(update_fields=["status", "payment_status"])
-    return redirect('profile')
-
-
-@staff_member_required
-def analytics_dashboard(request):
-    total_paid = Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED,
-                                        payment_status=Booking.PaymentStatus.PAID)
-    revenue = sum([b.theater.price for b in total_paid])
-
-    popular_movies = (
-        Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED)
-        .values('movie__name')
-        .order_by()
-    )
-    movie_counts = {}
-    for item in popular_movies:
-        name = item['movie__name']
-        movie_counts[name] = movie_counts.get(name, 0) + 1
-
-    busiest_theaters = (
-        Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED)
-        .values('theater__name')
-        .order_by()
-    )
-    theater_counts = {}
-    for item in busiest_theaters:
-        name = item['theater__name']
-        theater_counts[name] = theater_counts.get(name, 0) + 1
-
-    movie_top = sorted(movie_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-    theater_top = sorted(theater_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-
-    return render(request, 'admin/analytics.html', {
-        'revenue': revenue,
-        'movie_top': movie_top,
-        'theater_top': theater_top,
-    })
-
-
+# ----------------- MOVIE DETAIL -----------------
 def movie_detail(request, movie_id):
     movie = get_object_or_404(Movie, id=movie_id)
     theaters = Theater.objects.filter(movie=movie).order_by('time')
@@ -297,27 +85,251 @@ def movie_detail(request, movie_id):
     })
 
 
-# -----------------------------------------------------------------
-#   ⭐⭐⭐ ADD THIS PART — load movies.json into Vercel DB ⭐⭐⭐
-# -----------------------------------------------------------------
+# ----------------- THEATER LIST -----------------
+def theater_list(request, movie_id):
+    movie = get_object_or_404(Movie, id=movie_id)
+    theaters = Theater.objects.filter(movie=movie)
+    return render(request, 'movies/theater_list.html', {'movie': movie, 'theaters': theaters})
 
+
+# ----------------- BOOK SEATS -----------------
+@login_required(login_url='/login/')
+def book_seats(request, theater_id):
+    theater = get_object_or_404(Theater, id=theater_id)
+    release_expired_bookings(request.user)
+    seats = Seat.objects.filter(theater=theater)
+
+    if request.method == 'POST':
+        selected_seats = request.POST.getlist('seats')
+        error_seats = []
+
+        if not selected_seats:
+            return render(request, "movies/seat_selection.html",
+                          {'theater': theater, "seats": seats, 'error': "No seat selected"})
+
+        with transaction.atomic():
+            for seat_id in selected_seats:
+                try:
+                    seat = Seat.objects.select_for_update().get(id=seat_id, theater=theater)
+                except Seat.DoesNotExist:
+                    error_seats.append(f"#{seat_id}")
+                    continue
+
+                if seat.is_booked:
+                    error_seats.append(seat.seat_number)
+                    continue
+
+                try:
+                    b = Booking.objects.create(
+                        user=request.user,
+                        seat=seat,
+                        movie=theater.movie,
+                        theater=theater,
+                        status=Booking.StatusChoices.PENDING,
+                        payment_status=Booking.PaymentStatus.PENDING,
+                        expires_at=timezone.now() + timedelta(minutes=5)
+                    )
+                    seat.is_booked = True
+                    seat.save(update_fields=["is_booked"])
+                except IntegrityError:
+                    error_seats.append(seat.seat_number)
+
+        if error_seats:
+            error_message = f"The following seats are already booked: {', '.join(error_seats)}"
+            return render(request, 'movies/seat_selection.html',
+                          {'theater': theater, "seats": seats, 'error': error_message})
+
+        return redirect('checkout', theater_id=theater.id)
+
+    return render(request, 'movies/seat_selection.html', {'theater': theater, "seats": seats})
+
+
+# ----------------- RELEASE EXPIRED -----------------
+def release_expired_bookings(user):
+    expired = Booking.objects.filter(user=user, status=Booking.StatusChoices.PENDING,
+                                     expires_at__lt=timezone.now())
+    for b in expired.select_related('seat'):
+        if b.seat:
+            b.seat.is_booked = False
+            b.seat.save(update_fields=["is_booked"])
+        b.status = Booking.StatusChoices.CANCELLED
+        b.payment_status = Booking.PaymentStatus.REFUNDED
+        b.save(update_fields=["status", "payment_status"])
+
+
+# ----------------- CHECKOUT -----------------
+@login_required(login_url='/login/')
+def checkout(request, theater_id):
+    theater = get_object_or_404(Theater, id=theater_id)
+    release_expired_bookings(request.user)
+    bookings = Booking.objects.filter(user=request.user, theater=theater,
+                                      status=Booking.StatusChoices.PENDING).select_related('seat')
+    total = sum([theater.price for _ in bookings])
+    return render(request, 'movies/checkout.html', {'theater': theater, 'bookings': bookings, 'total': total})
+
+
+# ----------------- DUMMY PAYMENT FLOW -----------------
+@login_required(login_url='/login/')
+def pay_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+    if booking.status == Booking.StatusChoices.PENDING:
+        if request.method == 'POST':
+            upi_app = request.POST.get('upi_app', 'gpay')
+            return redirect('upi_otp', booking_id=booking.id, upi_app=upi_app)
+        return render(request, 'movies/upi_selection.html', {'booking': booking, 'amount': booking.theater.price})
+    return redirect('profile')
+
+
+@login_required(login_url='/login/')
+def upi_otp(request, booking_id, upi_app):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+    if booking.status != Booking.StatusChoices.PENDING:
+        return redirect('profile')
+
+    masked_email = (request.user.email[:3] + '***' + request.user.email.split('@')[1]) if request.user.email else f"{request.user.username}@example.com"
+
+    if request.method == 'POST':
+        return redirect('upi_scanner', booking_id=booking.id)
+
+    return render(request, 'movies/otp_verification.html', {
+        'booking': booking,
+        'upi_app': upi_app,
+        'user_email': masked_email,
+    })
+
+
+@login_required(login_url='/login/')
+def upi_scanner(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+    if booking.status != Booking.StatusChoices.PENDING:
+        return redirect('profile')
+
+    if request.method == 'POST':
+        return redirect('payment_success', booking_id=booking.id)
+
+    return render(request, 'movies/qr_scanner.html', {'booking': booking, 'amount': booking.theater.price})
+
+
+@login_required(login_url='/login/')
+def payment_success(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+
+    if booking.status == Booking.StatusChoices.PENDING:
+        booking.status = Booking.StatusChoices.CONFIRMED
+        booking.payment_status = Booking.PaymentStatus.PAID
+        booking.expires_at = None
+        booking.save(update_fields=["status", "payment_status", "expires_at"])
+
+        if request.user.email:
+            send_mail(
+                subject='Booking Confirmation - BookMySeat',
+                message=f"""
+Dear {request.user.username},
+
+Your booking is confirmed!
+
+Movie: {booking.movie.name}
+Theater: {booking.theater.name}
+Date & Time: {booking.theater.time}
+Seat: {booking.seat.seat_number}
+Amount Paid: ₹{booking.theater.price}
+
+Thank you for booking with BookMySeat!
+Enjoy your movie!
+""",
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[request.user.email],
+                fail_silently=True
+            )
+
+    return render(request, 'movies/payment_success_final.html', {'booking': booking})
+
+
+@login_required(login_url='/login/')
+def cancel_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+    if booking.status == Booking.StatusChoices.PENDING:
+        if booking.seat:
+            booking.seat.is_booked = False
+            booking.seat.save(update_fields=["is_booked"])
+        booking.status = Booking.StatusChoices.CANCELLED
+        booking.payment_status = Booking.PaymentStatus.REFUNDED
+        booking.save(update_fields=["status", "payment_status"])
+    return redirect('profile')
+
+
+# ----------------- ANALYTICS DASHBOARD -----------------
+@staff_member_required
+def analytics_dashboard(request):
+    total_paid = Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED,
+                                        payment_status=Booking.PaymentStatus.PAID)
+    revenue = sum([b.theater.price for b in total_paid])
+
+    popular_movies = Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED).values('movie__name').order_by()
+    movie_counts = {}
+    for item in popular_movies:
+        name = item['movie__name']
+        movie_counts[name] = movie_counts.get(name, 0) + 1
+
+    busiest_theaters = Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED).values('theater__name').order_by()
+    theater_counts = {}
+    for item in busiest_theaters:
+        name = item['theater__name']
+        theater_counts[name] = theater_counts.get(name, 0) + 1
+
+    movie_top = sorted(movie_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    theater_top = sorted(theater_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+
+    return render(request, 'admin/analytics.html', {'revenue': revenue, 'movie_top': movie_top, 'theater_top': theater_top})
+
+
+# ----------------- LOAD MOVIES JSON -----------------
+@staff_member_required
 def load_movies(request):
     try:
         call_command("loaddata", "movies.json")
         return HttpResponse("Movies loaded successfully!")
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}")
-        from django.http import HttpResponse
-from django.core.management import call_command
-from django.contrib.admin.views.decorators import staff_member_required
 
+
+# ----------------- ADD THEATERS AUTOMATICALLY -----------------
 @staff_member_required
 def add_theaters_view(request):
-    call_command('add_theaters')
-    return HttpResponse("Theaters added successfully!")
+    movies = Movie.objects.all()
+    formats = ['2D', '3D', 'IMAX 3D']
+    emoji_info = {
+        'Action': '🎯🚗♿',
+        'Comedy': '😂🍿♿',
+        'Drama': '🎭☕♿',
+        'Fantasy': '🧚‍♂️🏰♿',
+        'Animation': '🐭🎨♿',
+        'Horror': '👻🩸♿',
+        'Romance': '💖🌹♿',
+        'Sci-Fi': '🛸🤖♿',
+    }
 
+    for movie in movies:
+        for i in range(1, 4):
+            theater_name = f"{movie.name} Theater {i}"
+            emojis = emoji_info.get(movie.genre, '🎬♿')
+            theater_name_with_emoji = f"{theater_name} {emojis}"
 
+            time = datetime.now() + timedelta(days=i, hours=random.randint(10, 22))
+            format_choice = random.choice(formats)
+            price = random.randint(100, 150)
 
+            if not movie.theaters.filter(name=theater_name_with_emoji, time=time).exists():
+                theater = movie.theaters.create(
+                    name=theater_name_with_emoji,
+                    time=time,
+                    format=format_choice,
+                    price=price
+                )
 
+                for s in range(1, 31):
+                    theater.seats.create(seat_number=f"S{s:02}")
 
+    return HttpResponse("3 theaters added for each movie successfully!")
 
+                      
