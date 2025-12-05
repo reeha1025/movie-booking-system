@@ -1,11 +1,12 @@
 {
   "version": 2,
   "buildCommand": "bash build_files.sh",
-  "outputDirectory": "staticfiles_build",
+  "outputDirectory": "staticfiles",
   "rewrites": [
     { "source": "/(.*)", "destination": "/api/index.py" }
   ]
 }
+
 
 
 
