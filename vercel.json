@@ -1,19 +1,22 @@
 {
-  "version": 3,
+  "version": 2,
   "builds": [
     {
-      "src": "build_files.sh",
-      "use": "@vercel/static-build"
+      "src": "api/*.py",
+      "use": "@vercel/python" // Note: No version specified here, Vercel uses the latest.
+    },
+    {
+      "src": "index.py", // Or your main application file
+      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/"
+      "dest": "index.py" // Or your primary entry point
     }
   ]
 }
-
 
 
 
