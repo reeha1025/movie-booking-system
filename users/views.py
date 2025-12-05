@@ -1,11 +1,13 @@
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
 from .forms import UserRegisterForm, UserUpdateForm
-from movies.models import Movie, Booking
+from movies.models import Movie, Booking, Theater, Seat
+from django.utils import timezone
+from datetime import timedelta
 
 
 # ------------------------------------
@@ -105,3 +107,61 @@ def reset_password(request):
         form = PasswordChangeForm(user=request.user)
 
     return render(request, 'users/reset_password.html', {'form': form})
+
+
+# ------------------------------------
+# HELPER FUNCTION TO RELEASE EXPIRED BOOKINGS
+# ------------------------------------
+def release_expired_bookings(user):
+    expired = Booking.objects.filter(
+        user=user, status=Booking.StatusChoices.PENDING, expires_at__lt=timezone.now()
+    )
+    for b in expired.select_related('seat'):
+        if b.seat:
+            b.seat.is_booked = False
+            b.seat.save(update_fields=["is_booked"])
+        b.status = Booking.StatusChoices.CANCELLED
+        b.payment_status = Booking.PaymentStatus.REFUNDED
+        b.save(update_fields=["status", "payment_status"])
+
+
+# ------------------------------------
+# DUMMY PAYMENT FLOW
+# ------------------------------------
+@login_required
+def dummy_pay_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+    if booking.status != Booking.StatusChoices.PENDING:
+        return redirect('profile')
+    if request.method == 'POST':
+        upi_app = request.POST.get('upi_app')
+        return redirect('dummy_warning', booking_id=booking.id, upi_app=upi_app)
+    return render(request, 'movies/pay_booking.html', {'booking': booking})
+
+
+@login_required
+def dummy_warning(request, booking_id, upi_app):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+    if request.method == 'POST':
+        return redirect('dummy_otp', booking_id=booking.id, upi_app=upi_app)
+    return render(request, 'movies/dummy_warning.html', {'booking': booking, 'upi_app': upi_app})
+
+
+@login_required
+def dummy_otp(request, booking_id, upi_app):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+    if request.method == 'POST':
+        return redirect('dummy_scanner', booking_id=booking.id)
+    return render(request, 'movies/dummy_otp.html', {'booking': booking, 'upi_app': upi_app})
+
+
+@login_required
+def dummy_scanner(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+    if request.method == 'POST':
+        booking.status = Booking.StatusChoices.CONFIRMED
+        booking.payment_status = Booking.PaymentStatus.PAID
+        booking.save(update_fields=['status', 'payment_status'])
+        return redirect('payment_success', booking_id=booking.id)
+    return render(request, 'movies/dummy_scanner.html', {'booking': booking})
+
