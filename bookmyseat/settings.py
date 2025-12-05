@@ -15,13 +15,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 # -------------------------------
 SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
+
+# DEBUG should be False in production, True only locally
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
 
 # -------------------------------
 # ALLOWED HOSTS
 # -------------------------------
 ALLOWED_HOSTS = [
-    ".vercel.app",
+    ".vercel.app",  # Allow all Vercel subdomains
     "127.0.0.1",
     "localhost",
 ]
@@ -52,7 +54,7 @@ INSTALLED_APPS = [
 # -------------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files in production
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -91,13 +93,14 @@ TEMPLATES = [
 WSGI_APPLICATION = "bookmyseat.wsgi.application"
 
 # -------------------------------
-# DATABASE (PostgreSQL for Vercel / SQLite fallback for local)
+# DATABASE
+# Use PostgreSQL from Vercel env or SQLite locally
 # -------------------------------
 DATABASES = {
     "default": dj_database_url.config(
         default=os.environ.get("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
         conn_max_age=600,
-        ssl_require=True
+        ssl_require=not DEBUG  # SSL required only in production
     )
 }
 
@@ -120,12 +123,11 @@ USE_I18N = True
 USE_TZ = True
 
 # -------------------------------
-# STATIC FILES (CSS, JS, Images)
+# STATIC FILES
 # -------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# Only add STATICFILES_DIRS if the folder exists
 if os.path.exists(BASE_DIR / "static"):
     STATICFILES_DIRS = [BASE_DIR / "static"]
 else:
@@ -143,6 +145,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # -------------------------------
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
+
 
 
 
