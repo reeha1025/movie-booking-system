@@ -15,6 +15,7 @@ from django.contrib.auth.models import User
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+
 # ----------------- MOVIE LIST -----------------
 def movie_list(request):
     search_query = request.GET.get('search')
@@ -91,9 +92,11 @@ def theater_list(request, movie_id):
 
 
 # ----------------- RELEASE EXPIRED BOOKINGS -----------------
-def release_expired_bookings():  # UPDATED
-    expired = Booking.objects.filter(status=Booking.StatusChoices.PENDING,
-                                     expires_at__lt=timezone.now())
+def release_expired_bookings():
+    expired = Booking.objects.filter(
+        status=Booking.StatusChoices.PENDING,
+        expires_at__lt=timezone.now()
+    )
     for b in expired.select_related('seat'):
         if b.seat:
             b.seat.is_booked = False
@@ -108,7 +111,7 @@ def release_expired_bookings():  # UPDATED
 @login_required(login_url='/login/')
 def book_seats(request, theater_id):
     theater = get_object_or_404(Theater, id=theater_id)
-    release_expired_bookings()  # UPDATED
+    release_expired_bookings()
     seats = Seat.objects.filter(theater=theater)
 
     if request.method == 'POST':
@@ -132,14 +135,14 @@ def book_seats(request, theater_id):
                     continue
 
                 try:
-                    b = Booking.objects.create(
+                    Booking.objects.create(
                         user=request.user,
                         seat=seat,
                         movie=theater.movie,
                         theater=theater,
                         status=Booking.StatusChoices.PENDING,
                         payment_status=Booking.PaymentStatus.PENDING,
-                        expires_at=timezone.now() + timedelta(minutes=5)  # UPDATED
+                        expires_at=timezone.now() + timedelta(minutes=5)
                     )
                     seat.is_booked = True
                     seat.save(update_fields=["is_booked"])
@@ -160,9 +163,10 @@ def book_seats(request, theater_id):
 @login_required(login_url='/login/')
 def checkout(request, theater_id):
     theater = get_object_or_404(Theater, id=theater_id)
-    release_expired_bookings()  # UPDATED
-    bookings = Booking.objects.filter(user=request.user, theater=theater,
-                                      status=Booking.StatusChoices.PENDING).select_related('seat')
+    release_expired_bookings()
+    bookings = Booking.objects.filter(
+        user=request.user, theater=theater, status=Booking.StatusChoices.PENDING
+    ).select_related('seat')
     total = sum([theater.price for _ in bookings])
     return render(request, 'movies/checkout.html', {'theater': theater, 'bookings': bookings, 'total': total})
 
@@ -185,7 +189,8 @@ def upi_otp(request, booking_id, upi_app):
     if booking.status != Booking.StatusChoices.PENDING:
         return redirect('profile')
 
-    masked_email = (request.user.email[:3] + '***' + request.user.email.split('@')[1]) if request.user.email else f"{request.user.username}@example.com"
+    masked_email = (request.user.email[:3] + '***' + request.user.email.split('@')[1]) \
+        if request.user.email else f"{request.user.username}@example.com"
 
     if request.method == 'POST':
         return redirect('upi_scanner', booking_id=booking.id)
@@ -216,7 +221,7 @@ def payment_success(request, booking_id):
     if booking.status == Booking.StatusChoices.PENDING:
         booking.status = Booking.StatusChoices.CONFIRMED
         booking.payment_status = Booking.PaymentStatus.PAID
-        booking.expires_at = None  # UPDATED
+        booking.expires_at = None
         booking.save(update_fields=["status", "payment_status", "expires_at"])
 
         if request.user.email:
@@ -242,8 +247,10 @@ def cancel_booking(request, booking_id):
 # ----------------- ANALYTICS DASHBOARD -----------------
 @staff_member_required
 def analytics_dashboard(request):
-    total_paid = Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED,
-                                        payment_status=Booking.PaymentStatus.PAID)
+    total_paid = Booking.objects.filter(
+        status=Booking.StatusChoices.CONFIRMED,
+        payment_status=Booking.PaymentStatus.PAID
+    )
     revenue = sum([b.theater.price for b in total_paid])
 
     popular_movies = Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED).values('movie__name')
@@ -361,5 +368,3 @@ Thank you for booking with BookMySeat.
         [user.email],
         fail_silently=True
     )
-
-
