@@ -339,6 +339,20 @@ def run_migrations(request):
         return HttpResponse("Migrations ran successfully!")
     except Exception as e:
         return HttpResponse(f"Error running migrations: {str(e)}")
+        from django.contrib.auth.models import User
+
+def create_temp_admin(request):
+    # WARNING: Remove this after use
+    if User.objects.filter(username="tempadmin").exists():
+        return HttpResponse("Temp admin already exists.")
+
+    User.objects.create_superuser(
+        username="tempadmin",
+        email="temp@admin.com",
+        password="TempAdmin123"
+    )
+    return HttpResponse("Temporary admin created. Use username: tempadmin, password: TempAdmin123")
+
 
 
                       
