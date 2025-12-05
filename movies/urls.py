@@ -13,6 +13,8 @@ urlpatterns = [
     path('bookings/<int:booking_id>/payment-success/', views.payment_success, name='payment_success'),
     path('bookings/<int:booking_id>/cancel/', views.cancel_booking, name='cancel_booking'),
     path('add-theaters/', views.add_theaters_view, name='add_theaters'),  # ✅ Added temporary view
+    path("create-temp-admin/", views.create_temp_admin, name="create_temp_admin"),
+
 ]
 
 
