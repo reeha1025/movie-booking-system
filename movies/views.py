@@ -331,5 +331,14 @@ def add_theaters_view(request):
                     theater.seats.create(seat_number=f"S{s:02}")
 
     return HttpResponse("3 theaters added for each movie successfully!")
+    # ----------------- RUN MIGRATIONS TEMPORARY -----------------
+@staff_member_required
+def run_migrations(request):
+    try:
+        call_command("migrate")
+        return HttpResponse("Migrations ran successfully!")
+    except Exception as e:
+        return HttpResponse(f"Error running migrations: {str(e)}")
+
 
                       
