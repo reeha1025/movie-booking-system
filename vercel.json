@@ -1,16 +1,19 @@
 {
-  "version": 2,
+  "version": 3,
   "builds": [
     {
-      "src": "manage.py",
-      "use": "@vercel/python@1.0.0",
-      "config": { "maxLambdaSize": "50mb" }
+      "src": "build_files.sh",
+      "use": "@vercel/static-build"
     }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "manage.py" }
+    {
+      "src": "/(.*)",
+      "dest": "/"
+    }
   ]
 }
+
 
 
 
