@@ -368,3 +368,4 @@ Thank you for booking with BookMySeat.
         [user.email],
         fail_silently=True
     )
+
