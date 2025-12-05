@@ -130,12 +130,8 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-if os.path.exists(BASE_DIR / "static"):
-    STATICFILES_DIRS = [BASE_DIR / "static"]
-else:
-    STATICFILES_DIRS = []
-
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 # -------------------------------
 # DEFAULT AUTO FIELD
