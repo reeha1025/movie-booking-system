@@ -12,7 +12,38 @@ import random
 import stripe
 from django.conf import settings
 
+from django.db.models import Count, Sum, F, Q
+from django.db.models.functions import TruncDay
+
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+# ----------------- HELPERS -----------------
+def send_booking_email(user, booking):
+    """Send a simple booking confirmation email (fail_silently)."""
+    subject = "🎬 Ticket Confirmation - BookMySeat"
+    show_time = booking.theater.time.strftime('%d %b %Y, %I:%M %p') if booking.theater.time else "TBD"
+    message = f"""
+Hello {user.username},
+
+Your movie ticket is confirmed! 🎉
+
+Movie: {booking.movie.name}
+Theater: {booking.theater.name}
+Show Time: {show_time}
+Seat No: {booking.seat.seat_number}
+Amount Paid: ₹{booking.theater.price}
+
+Enjoy your movie! 🍿
+Thank you for booking with BookMySeat.
+"""
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=True
+    )
 
 
 # ----------------- MOVIE LIST -----------------
@@ -64,7 +95,6 @@ def movie_detail(request, movie_id):
         try:
             from urllib.parse import urlparse, parse_qs
             u = urlparse(movie.trailer_url)
-
             if 'youtube.com/embed/' in movie.trailer_url:
                 embed = movie.trailer_url
             elif 'youtube.com' in u.netloc:
@@ -93,7 +123,8 @@ def theater_list(request, movie_id):
 
 
 # ----------------- RELEASE EXPIRED BOOKINGS -----------------
-def release_expired_bookings():  # UPDATED
+def release_expired_bookings():
+    """Release all bookings that have expired (globally)."""
     expired = Booking.objects.filter(status=Booking.StatusChoices.PENDING,
                                      expires_at__lt=timezone.now())
     for b in expired.select_related('seat'):
@@ -110,7 +141,7 @@ def release_expired_bookings():  # UPDATED
 @login_required(login_url='/login/')
 def book_seats(request, theater_id):
     theater = get_object_or_404(Theater, id=theater_id)
-    release_expired_bookings()  # UPDATED
+    release_expired_bookings()
     seats = Seat.objects.filter(theater=theater)
 
     if request.method == 'POST':
@@ -141,7 +172,7 @@ def book_seats(request, theater_id):
                         theater=theater,
                         status=Booking.StatusChoices.PENDING,
                         payment_status=Booking.PaymentStatus.PENDING,
-                        expires_at=timezone.now() + timedelta(minutes=5)  # UPDATED
+                        expires_at=timezone.now() + timedelta(minutes=5)
                     )
                     seat.is_booked = True
                     seat.save(update_fields=["is_booked"])
@@ -162,7 +193,7 @@ def book_seats(request, theater_id):
 @login_required(login_url='/login/')
 def checkout(request, theater_id):
     theater = get_object_or_404(Theater, id=theater_id)
-    release_expired_bookings()  # UPDATED
+    release_expired_bookings()
     bookings = Booking.objects.filter(user=request.user, theater=theater,
                                       status=Booking.StatusChoices.PENDING).select_related('seat')
     total = sum([theater.price for _ in bookings])
@@ -218,30 +249,12 @@ def payment_success(request, booking_id):
     if booking.status == Booking.StatusChoices.PENDING:
         booking.status = Booking.StatusChoices.CONFIRMED
         booking.payment_status = Booking.PaymentStatus.PAID
-        booking.expires_at = None  # UPDATED
+        booking.expires_at = None
         booking.save(update_fields=["status", "payment_status", "expires_at"])
 
         if request.user.email:
-            send_mail(
-                subject='Booking Confirmation - BookMySeat',
-                message=f"""
-Dear {request.user.username},
-
-Your booking is confirmed!
-
-Movie: {booking.movie.name}
-Theater: {booking.theater.name}
-Date & Time: {booking.theater.time}
-Seat: {booking.seat.seat_number}
-Amount Paid: ₹{booking.theater.price}
-
-Thank you for booking with BookMySeat!
-Enjoy your movie!
-""",
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[request.user.email],
-                fail_silently=True
-            )
+            # use helper to send nicer message
+            send_booking_email(request.user, booking)
 
     return render(request, 'movies/payment_success_final.html', {'booking': booking})
 
@@ -263,26 +276,69 @@ def cancel_booking(request, booking_id):
 # ----------------- ANALYTICS DASHBOARD -----------------
 @staff_member_required
 def analytics_dashboard(request):
-    total_paid = Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED,
-                                        payment_status=Booking.PaymentStatus.PAID)
-    revenue = sum([b.theater.price for b in total_paid])
+    # High-level metrics
+    total_bookings = Booking.objects.count()
+    total_confirmed = Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED).count()
+    total_pending = Booking.objects.filter(status=Booking.StatusChoices.PENDING).count()
 
-    popular_movies = Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED).values('movie__name').order_by()
-    movie_counts = {}
-    for item in popular_movies:
-        name = item['movie__name']
-        movie_counts[name] = movie_counts.get(name, 0) + 1
+    # Revenue from confirmed paid bookings (sum of theater.price where booking confirmed)
+    confirmed_bookings = Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED,
+                                                payment_status=Booking.PaymentStatus.PAID).select_related('theater')
+    revenue = sum([b.theater.price for b in confirmed_bookings])
 
-    busiest_theaters = Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED).values('theater__name').order_by()
-    theater_counts = {}
-    for item in busiest_theaters:
-        name = item['theater__name']
-        theater_counts[name] = theater_counts.get(name, 0) + 1
+    # Top movies (confirmed bookings)
+    top_movies_qs = (Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED)
+                     .values('movie__id', 'movie__name')
+                     .annotate(count=Count('id'))
+                     .order_by('-count')[:10])
+    top_movies = [{'name': x['movie__name'], 'count': x['count']} for x in top_movies_qs]
 
-    movie_top = sorted(movie_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-    theater_top = sorted(theater_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    # Top theaters
+    top_theaters_qs = (Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED)
+                       .values('theater__id', 'theater__name')
+                       .annotate(count=Count('id'))
+                       .order_by('-count')[:10])
+    top_theaters = [{'name': x['theater__name'], 'count': x['count']} for x in top_theaters_qs]
 
-    return render(request, 'admin/analytics.html', {'revenue': revenue, 'movie_top': movie_top, 'theater_top': theater_top})
+    # Daily bookings (last 14 days)
+    days_ago_14 = timezone.now() - timedelta(days=14)
+    daily_qs = (Booking.objects.filter(booked_at__gte=days_ago_14)
+                .annotate(day=TruncDay('booked_at'))
+                .values('day')
+                .annotate(count=Count('id'))
+                .order_by('day'))
+    daily_bookings = [{'day': x['day'].date().isoformat(), 'count': x['count']} for x in daily_qs]
+
+    # Seat occupancy: percent of seats booked per theater (sample top 10)
+    theater_seats = Theater.objects.annotate(
+        total_seats=Count('seats'),
+        booked_seats=Count('seats', filter=Q(seats__is_booked=True))
+    ).order_by('-booked_seats')[:10]
+
+    seat_occupancy = []
+    for t in theater_seats:
+        total = t.total_seats or 0
+        booked = t.booked_seats or 0
+        percent = round((booked / total * 100), 1) if total else 0
+        seat_occupancy.append({
+            'theater': t.name,
+            'movie': t.movie.name if t.movie else '',
+            'booked': booked,
+            'total': total,
+            'percent': percent
+        })
+
+    context = {
+        'total_bookings': total_bookings,
+        'total_confirmed': total_confirmed,
+        'total_pending': total_pending,
+        'revenue': revenue,
+        'movie_top': top_movies,
+        'theater_top': top_theaters,
+        'daily_bookings': daily_bookings,
+        'seat_occupancy': seat_occupancy,
+    }
+    return render(request, 'admin/analytics.html', context)
 
 
 # ----------------- LOAD MOVIES JSON -----------------
@@ -321,6 +377,7 @@ def add_theaters_view(request):
             format_choice = random.choice(formats)
             price = random.randint(100, 150)
 
+            # avoid duplicate by name + approximate time (store exact time so allow uniqueness)
             if not movie.theaters.filter(name=theater_name_with_emoji, time=time).exists():
                 theater = movie.theaters.create(
                     name=theater_name_with_emoji,
@@ -345,43 +402,19 @@ def run_migrations(request):
         return HttpResponse(f"Error running migrations: {str(e)}")
 
 
+# ----------------- CREATE TEMP ADMIN (REMOVE AFTER USE) -----------------
 from django.contrib.auth.models import User
 
 def create_temp_admin(request):
     if User.objects.filter(username="tempadmin").exists():
         return HttpResponse("Temp admin already exists.")
-
     User.objects.create_superuser(
         username="tempadmin",
         email="temp@admin.com",
         password="TempAdmin123"
     )
     return HttpResponse("Temporary admin created. Use username: tempadmin, password: TempAdmin123")
-    def send_booking_email(user, booking):
-    subject = "🎬 Ticket Confirmation - BookMySeat"
 
-    message = f"""
-Hello {user.username},
-
-Your movie ticket is confirmed! 🎉
-
-Movie: {booking.movie.name}
-Theater: {booking.theater.name}
-Show Time: {booking.theater.time.strftime('%d %b %Y, %I:%M %p')}
-Seat No: {booking.seat.seat_number}
-Amount Paid: ₹{booking.theater.price}
-
-Enjoy your movie! 🍿
-Thank you for booking with BookMySeat.
-"""
-
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=True
-    )
 
 
 
