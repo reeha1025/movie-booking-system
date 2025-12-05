@@ -352,6 +352,14 @@ def create_temp_admin(request):
         password="TempAdmin123"
     )
     return HttpResponse("Temporary admin created. Use username: tempadmin, password: TempAdmin123")
+    @staff_member_required
+def run_migrations(request):
+    try:
+        call_command("migrate")
+        return HttpResponse("Migrations ran successfully!")
+    except Exception as e:
+        return HttpResponse(f"Error running migrations: {str(e)}")
+
 
 
 
