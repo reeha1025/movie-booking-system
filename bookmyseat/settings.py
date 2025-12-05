@@ -145,6 +145,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # -------------------------------
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # or your email provider
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@gmail.com'  # your Gmail or SMTP email
+EMAIL_HOST_PASSWORD = 'your-email-password'  # app password if using Gmail
+DEFAULT_FROM_EMAIL = 'Movie Booking <your-email@gmail.com>'
+
 
 
 
