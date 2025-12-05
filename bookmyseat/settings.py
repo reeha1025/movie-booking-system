@@ -4,8 +4,7 @@ Django settings for bookmyseat project.
 
 from pathlib import Path
 import os
- import dj_database_url
-import os
+import dj_database_url
 
 # -------------------------------
 # BASE DIRECTORY
@@ -16,7 +15,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 # -------------------------------
 SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
-
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
 
 # -------------------------------
@@ -91,18 +89,13 @@ TEMPLATES = [
 WSGI_APPLICATION = "bookmyseat.wsgi.application"
 
 # -------------------------------
-# DATABASE
+# DATABASE (PostgreSQL via Neon)
 # -------------------------------
-
-    import dj_database_url
-import os
 DATABASES = {
     "default": dj_database_url.config(
         default=os.environ.get("DATABASE_URL"),
         conn_max_age=600,
-        ssl_require=True  # Ensure SSL for Neon
-    
-
+        ssl_require=True
     )
 }
 
@@ -129,9 +122,13 @@ USE_TZ = True
 # -------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+# -------------------------------
+# MEDIA FILES (if needed)
+# -------------------------------
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # -------------------------------
 # DEFAULT AUTO FIELD
@@ -145,7 +142,7 @@ STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
 
 # -------------------------------
-# EMAIL SETTINGS (NOW SAFE)
+# EMAIL SETTINGS
 # -------------------------------
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
@@ -154,6 +151,19 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = "Movie Booking <noreply@bookmyseat.com>"
+
+# -------------------------------
+# LOGIN REDIRECTS
+# -------------------------------
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
+
+# -------------------------------
+# OTHER SETTINGS
+# -------------------------------
+# Optional: add any additional settings like CORS, session configs, etc.
+
 
 
 
