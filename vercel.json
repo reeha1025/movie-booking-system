@@ -1,17 +1,12 @@
 {
   "version": 2,
-  "functions": {
-    "api/index.py": {
-      "runtime": "python3.9"
-    }
-  },
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "api/index.py"
-    }
+  "buildCommand": "bash build_files.sh",
+  "outputDirectory": "staticfiles_build",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index.py" }
   ]
 }
+
 
 
 
