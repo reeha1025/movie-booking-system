@@ -18,13 +18,19 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
 
 # -------------------------------
-# ALLOWED HOSTS
+# ALLOWED HOSTS (Railway + Local)
 # -------------------------------
 ALLOWED_HOSTS = [
+    "*",
+    ".railway.app",
     ".vercel.app",
     "127.0.0.1",
     "localhost",
 ]
+
+RAILWAY_URL = os.environ.get("RAILWAY_URL")
+if RAILWAY_URL:
+    ALLOWED_HOSTS.append(RAILWAY_URL)
 
 VERCEL_URL = os.environ.get("VERCEL_URL")
 if VERCEL_URL:
@@ -89,7 +95,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "bookmyseat.wsgi.application"
 
 # -------------------------------
-# DATABASE (PostgreSQL via Neon)
+# DATABASE (Railway uses DATABASE_URL)
 # -------------------------------
 DATABASES = {
     "default": dj_database_url.config(
@@ -118,14 +124,14 @@ USE_I18N = True
 USE_TZ = True
 
 # -------------------------------
-# STATIC FILES
+# STATIC FILES (Whitenoise Required)
 # -------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # -------------------------------
-# MEDIA FILES (if needed)
+# MEDIA FILES
 # -------------------------------
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -158,16 +164,6 @@ DEFAULT_FROM_EMAIL = "Movie Booking <noreply@bookmyseat.com>"
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
-
-# -------------------------------
-# OTHER SETTINGS
-# -------------------------------
-# Optional: add any additional settings like CORS, session configs, etc.
-
-
-
-
-
 
 
 
