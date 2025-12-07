@@ -15,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 # -------------------------------
 SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
-DEBUG = os.environ.get("DEBUG", "False").lower() in ("1", "true", "yes")
+DEBUG = os.environ.get("DEBUG", "True").lower() in ("1", "true", "yes")
 
 # -------------------------------
 # ALLOWED HOSTS (Railway + Local)
@@ -97,13 +97,26 @@ WSGI_APPLICATION = "bookmyseat.wsgi.application"
 # -------------------------------
 # DATABASE (Railway uses DATABASE_URL)
 # -------------------------------
+
+
+
+# -------------------------------
+# DATABASE
+# -------------------------------
+# Use DATABASE_URL from environment for Postgres (Render/Railway),
+# otherwise fallback to local SQLite.
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
+    'default': dj_database_url.config(
+        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
         conn_max_age=600,
-        ssl_require=True
+        conn_health_checks=True,
     )
 }
+
+# Enable SSL for PostgreSQL (Production)
+if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+    DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
+
 
 # -------------------------------
 # PASSWORD VALIDATION

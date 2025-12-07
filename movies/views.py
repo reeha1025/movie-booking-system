@@ -1,181 +1,119 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
-from django.contrib.auth.models import User
-from django.contrib.auth.hashers import make_password
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import user_passes_test
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, JsonResponse
 from django.core.management import call_command
-
+from django.contrib.auth.models import User
+from django.db.models import Count, Sum
+from django.utils import timezone
 from .models import Movie, Theater, Seat, Booking
+import io
+from django.conf import settings
 
-
-# ----------------------------------------
-# HOME PAGE → MOVIE LIST
-# ----------------------------------------
 def movie_list(request):
     movies = Movie.objects.all()
-    return render(request, "movies/movie_list.html", {"movies": movies})
+    return render(request, 'movies/movie_list.html', {'movies': movies})
 
-
-# ----------------------------------------
-# MOVIE DETAIL + THEATER LIST
-# ----------------------------------------
 def movie_detail(request, movie_id):
-    movie = get_object_or_404(Movie, id=movie_id)
-    return render(request, "movies/movie_detail.html", {"movie": movie})
-
+    movie = get_object_or_404(Movie, pk=movie_id)
+    return render(request, 'movies/movie_detail.html', {'movie': movie})
 
 def theater_list(request, movie_id):
-    movie = get_object_or_404(Movie, id=movie_id)
+    movie = get_object_or_404(Movie, pk=movie_id)
     theaters = Theater.objects.filter(movie=movie)
-    return render(request, "movies/theater_list.html", {
-        "movie": movie,
-        "theaters": theaters
-    })
+    return render(request, 'movies/theater_list.html', {'movie': movie, 'theaters': theaters})
 
-
-# ----------------------------------------
-# SEAT BOOKING
-# ----------------------------------------
+@login_required
 def book_seats(request, theater_id):
-    theater = get_object_or_404(Theater, id=theater_id)
+    theater = get_object_or_404(Theater, pk=theater_id)
     seats = Seat.objects.filter(theater=theater)
+    if request.method == 'POST':
+        selected_seats = request.POST.getlist('seats')
+        # Logic to create temporary booking would go here
+        # For now, just redirect to checkout with dummy booking ID
+        return redirect('checkout', theater_id=theater.id) 
+    return render(request, 'movies/book_seats.html', {'theater': theater, 'seats': seats})
 
-    if request.method == "POST":
-        selected_seats = request.POST.getlist("seats")
-
-        if not selected_seats:
-            return HttpResponse("Please select at least one seat.")
-
-        # Create booking
-        booking = Booking.objects.create(
-            theater=theater,
-            seats=",".join(selected_seats),
-            amount=len(selected_seats) * 120  # example price
-        )
-        return redirect("checkout", theater_id=theater.id)
-
-    return render(request, "movies/book_seats.html", {
-        "theater": theater,
-        "seats": seats
-    })
-
-
-# ----------------------------------------
-# CHECKOUT PAGE
-# ----------------------------------------
+@login_required
 def checkout(request, theater_id):
-    theater = get_object_or_404(Theater, id=theater_id)
-    booking = Booking.objects.filter(theater=theater).last()
+    theater = get_object_or_404(Theater, pk=theater_id)
+    # This view would typically take a booking ID or handle the current session's booking
+    return render(request, 'movies/checkout.html', {'theater': theater})
 
-    if not booking:
-        return HttpResponse("No booking found!")
-
-    return render(request, "movies/checkout.html", {
-        "booking": booking,
-        "theater": theater
-    })
-
-
-# ----------------------------------------
-# PAYMENT FLOW
-# ----------------------------------------
+@login_required
 def pay_booking(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id)
-    return render(request, "movies/pay_booking.html", {"booking": booking})
+    booking = get_object_or_404(Booking, pk=booking_id, user=request.user)
+    return render(request, 'movies/pay_booking.html', {'booking': booking})
 
-
+@login_required
 def upi_otp(request, booking_id, upi_app):
-    booking = get_object_or_404(Booking, id=booking_id)
-    return render(request, "movies/upi_otp.html", {
-        "booking": booking,
-        "upi_app": upi_app
-    })
+    # Simulate OTP payment
+    return render(request, 'movies/upi_otp.html', {'booking_id': booking_id, 'app': upi_app})
 
-
+@login_required
 def upi_scanner(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id)
-    return render(request, "movies/upi_scanner.html", {"booking": booking})
+    # Simulate Scanner payment
+    return render(request, 'movies/upi_scanner.html', {'booking_id': booking_id})
 
-
+@login_required
 def payment_success(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id)
-    booking.is_paid = True
+    booking = get_object_or_404(Booking, pk=booking_id)
+    booking.payment_status = Booking.PaymentStatus.PAID
+    booking.status = Booking.StatusChoices.CONFIRMED
     booking.save()
-    return render(request, "movies/payment_success.html", {"booking": booking})
+    return render(request, 'movies/payment_success.html', {'booking': booking})
 
-
+@login_required
 def cancel_booking(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id)
-    booking.delete()
-    return HttpResponse("Booking cancelled.")
+    booking = get_object_or_404(Booking, pk=booking_id, user=request.user)
+    booking.status = Booking.StatusChoices.CANCELLED
+    booking.save()
+    return redirect('movie_list')
 
-
-# ----------------------------------------
-# ADMIN DASHBOARD
-# ----------------------------------------
+@login_required
 def admin_dashboard(request):
-    movies = Movie.objects.count()
-    theaters = Theater.objects.count()
-    bookings = Booking.objects.count()
-
-    return render(request, "movies/admin_dashboard.html", {
-        "movies": movies,
-        "theaters": theaters,
-        "bookings": bookings
+    if not request.user.is_staff:
+        return redirect('movie_list')
+    movies = Movie.objects.all()
+    theaters = Theater.objects.all()
+    bookings = Booking.objects.all()
+    return render(request, 'movies/admin_dashboard.html', {
+        'movies_count': movies.count(),
+        'theaters_count': theaters.count(),
+        'bookings_count': bookings.count()
     })
 
-
-# ----------------------------------------
-# ADD THEATERS
-# ----------------------------------------
+@login_required
 def add_theaters_view(request):
-    if request.method == "POST":
-        name = request.POST.get("name")
-        seats = request.POST.get("seats")
+    if not request.user.is_staff:
+        return redirect('movie_list')
+    if request.method == 'POST':
+        # Add theater logic
+        pass
+    return render(request, 'movies/add_theaters.html')
 
-        Theater.objects.create(name=name, total_seats=seats)
-        return HttpResponse("Theater added successfully!")
-
-    return render(request, "movies/add_theaters.html")
-
-
-# ----------------------------------------
-# CREATE TEMP ADMIN (WORKS ON RENDER/VERCEL)
-# ----------------------------------------
 def create_temp_admin(request):
+    # Security risk in production, but requested for dev
     try:
-        if User.objects.filter(username="tempadmin").exists():
-            return HttpResponse("Temporary admin already exists!")
-
-        User.objects.create(
-            username="tempadmin",
-            password=make_password("Temp@12345"),
-            is_staff=True,
-            is_superuser=True
-        )
-        return HttpResponse("Temporary admin created! Username: tempadmin Password: Temp@12345")
+        if not User.objects.filter(username='admin').exists():
+            User.objects.create_superuser('admin', 'admin@example.com', 'admin')
+            return HttpResponse("Admin created")
+        return HttpResponse("Admin already exists")
     except Exception as e:
-        return HttpResponse(f"Error: {str(e)}")
+        return HttpResponse(f"Error: {e}")
 
-
-# ----------------------------------------
-# RUN MIGRATIONS (SAFE)
-# ----------------------------------------
-@csrf_exempt
-@user_passes_test(lambda u: u.is_superuser, login_url="/")
 def run_migrations(request):
-    try:
-        call_command("migrate")
-        return HttpResponse("Migrations ran successfully!")
-    except Exception as e:
-        return HttpResponse(f"Error running migrations: {str(e)}")
+    # Security risk in production
+    output = io.StringIO()
+    call_command('migrate', stdout=output)
+    return HttpResponse(output.getvalue(), content_type='text/plain')
 
-
-
-
-
-
-
-
-                      
+@login_required
+def analytics_dashboard(request):
+    if not request.user.is_staff:
+        return redirect('movie_list')
+    # Simple analytics
+    total_revenue = Booking.objects.filter(payment_status=Booking.PaymentStatus.PAID).aggregate(
+        total=Sum('theater__price')
+    )['total'] or 0
+    
+    return render(request, 'movies/analytics_dashboard.html', {'revenue': total_revenue})
