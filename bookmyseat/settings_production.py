@@ -13,7 +13,13 @@ DEBUG = False
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # Allowed hosts for production
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+
+# CSRF Trusted Origins (Required for Render)
+CSRF_TRUSTED_ORIGINS = [
+    'https://movie-booking-system-2-viku.onrender.com',
+    'https://*.onrender.com',
+]
 
 # Database configuration for production
 DATABASE_URL = os.environ.get('DATABASE_URL')
