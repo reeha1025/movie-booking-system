@@ -9,9 +9,9 @@
             class="d-flex justify-content-between align-items-center flex-wrap"
           >
             <div>
-              <h4 class="card-title">{{ theaters.movie.name }}</h4>
+              <h4 class="card-title">{{ theater.movie.name }}</h4>
               <p class="card-text text-muted">
-                {{ theaters.name }} | {{ theaters.time }}
+                {{ theater.name }} | {{ theater.time }}
               </p>
             </div>
             <div class="mt-2 mt-sm-0">
@@ -167,4 +167,21 @@
       <button type="submit">Book selected seats</button>
 </form> -->
 
+{% endblock %}
+
+{% block script %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const seats = document.querySelectorAll('.seat input[type="checkbox"]');
+        seats.forEach(seat => {
+            seat.addEventListener('change', function() {
+                if (this.checked) {
+                    this.closest('.seat').classList.add('selected');
+                } else {
+                    this.closest('.seat').classList.remove('selected');
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

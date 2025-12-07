@@ -139,7 +139,7 @@ def book_seats(request, theater_id):
         # Logic to create temporary booking would go here
         # For now, just redirect to checkout with dummy booking ID
         return redirect('checkout', theater_id=theater.id) 
-    return render(request, 'movies/book_seats.html', {'theater': theater, 'seats': seats})
+    return render(request, 'movies/seat_selection.html', {'theater': theater, 'seats': seats})
 
 @login_required
 def checkout(request, theater_id):
