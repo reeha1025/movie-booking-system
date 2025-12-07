@@ -26,6 +26,7 @@ urlpatterns = [
     path('add-theaters/', views.add_theaters_view, name='add_theaters'),
     path('create-temp-admin/', views.create_temp_admin, name='create_temp_admin'),
     path('run-migrations/', run_migrations, name='run_migrations'),
+    path('populate-db/', views.populate_db, name='populate_db'),
 ]
 
 
