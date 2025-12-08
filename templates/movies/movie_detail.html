@@ -5,13 +5,11 @@
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     min-height: 100vh;
   }
-
   .movie-detail-container {
     max-width: 900px;
     margin: 40px auto;
     padding: 20px;
   }
-
   .movie-card {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     border: 1px solid #334155;
@@ -19,13 +17,11 @@
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   }
-
   .movie-header {
     background: linear-gradient(135deg, #FF0000 0%, #dc2626 100%);
     padding: 30px;
     text-align: center;
   }
-
   .movie-title {
     color: #ffffff;
     font-weight: 800;
@@ -33,11 +29,9 @@
     margin: 0;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
   }
-
   .movie-content {
     padding: 40px;
   }
-
   .info-section {
     background: #1e293b;
     border-radius: 12px;
@@ -45,7 +39,6 @@
     margin-bottom: 25px;
     border: 1px solid #334155;
   }
-
   .info-label {
     color: #94a3b8;
     font-size: 14px;
@@ -54,41 +47,6 @@
     letter-spacing: 1px;
     margin-bottom: 10px;
   }
-
-  .info-value {
-    color: #e2e8f0;
-    font-size: 20px;
-    font-weight: 700;
-  }
-
-  .price-badge {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: #ffffff;
-    padding: 15px 30px;
-    border-radius: 50px;
-    font-size: 32px;
-    font-weight: 800;
-    display: inline-block;
-    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
-  }
-
-  .badge-group {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 15px;
-  }
-
-  .custom-badge {
-    background: #FF0000;
-    color: #ffffff;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 14px;
-    display: inline-block;
-  }
-
   .trailer-container {
     position: relative;
     padding-bottom: 56.25%;
@@ -96,9 +54,7 @@
     overflow: hidden;
     border-radius: 12px;
     margin-bottom: 25px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
   }
-
   .trailer-container iframe {
     position: absolute;
     top: 0;
@@ -107,14 +63,11 @@
     height: 100%;
     border: none;
   }
-
   .description-text {
     color: #cbd5e1;
     font-size: 16px;
     line-height: 1.8;
-    margin-bottom: 20px;
   }
-
   .btn-proceed {
     width: 100%;
     padding: 20px;
@@ -123,26 +76,17 @@
     border-radius: 12px;
     color: #ffffff;
     font-size: 20px;
-    font-weight: 800;
     cursor: pointer;
-    transition: all 0.3s;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
   }
-
-  .btn-proceed:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 40px rgba(239, 68, 68, 0.6);
-  }
-
   .movie-poster {
     width: 100%;
     max-width: 400px;
     border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
     margin: 0 auto 30px;
     display: block;
+  }
+  .custom-badge {
+      background: #FF0000; color: #fff; padding: 5px 10px; border-radius: 10px; margin-right: 5px;
   }
 </style>
 
@@ -151,20 +95,18 @@
     <div class="movie-header">
       <h1 class="movie-title">{{ movie.name }}</h1>
     </div>
-
     <div class="movie-content">
-      <!-- Movie Poster -->
-      <img src="{{ movie.image.url }}" class="movie-poster" alt="{{ movie.name }}"
-        onerror="this.onerror=null;this.src='/static/img/placeholder.jpg';" />
-
-      <!-- Movie Details -->
+      <img src="{{ movie.image.url }}" class="movie-poster" alt="{{ movie.name }}" onerror="this.onerror=null;this.src='/static/img/placeholder.jpg';" />
+      
       <div class="info-section">
-        <div class="info-label">Genre & Language</div>
-        <div class="badge-group">
-          <span class="custom-badge">{{ movie.genre }}</span>
-          <span class="custom-badge">{{ movie.language }}</span>
-          {% if movie.release_year %}<span class="custom-badge">{{ movie.release_year }}</span>{% endif %}
-        </div>
+        <div class="info-label">Info</div>
+        <p><span class="custom-badge">{{ movie.genre }}</span> <span class="custom-badge">{{ movie.language }}</span></p>
+      </div>
+
+       <!-- Cast -->
+       <div class="info-section">
+        <div class="info-label">Cast</div>
+        <p class="description-text" style="font-size: 18px; color: #fff;">{{ movie.cast }}</p>
       </div>
 
       <!-- Description -->
@@ -183,18 +125,13 @@
       </div>
       {% endif %}
 
-      <!-- Ticket Price -->
       <div class="info-section text-center">
         <div class="info-label">Ticket Price Starting From</div>
-        <div class="price-badge">₹{{ min_price }}</div>
+        <h2 style="color: #fff;">₹{{ min_price }}</h2>
       </div>
 
-      <!-- Proceed Button -->
-      <a href="{% url 'theater_list' movie.id %}" class="btn btn-proceed" style="text-decoration: none;">
-        Proceed to Book Tickets
-      </a>
+      <a href="{% url 'theater_list' movie.id %}" class="btn btn-proceed" style="text-decoration: none;">Proceed to Book Tickets</a>
     </div>
   </div>
 </div>
-
 {% endblock %}
