@@ -11,7 +11,7 @@ import io
 from django.conf import settings
 from datetime import datetime, timedelta
 import random
-import razorpay 
+import stripe
 
 def cleanup_expired_bookings():
     """Cancels pending bookings that have expired and frees the seats."""
@@ -30,8 +30,8 @@ def cleanup_expired_bookings():
         booking.status = Booking.StatusChoices.CANCELLED
         booking.save()
 
-# Initialize Razorpay Client
-razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+# Initialize Stripe
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 def populate_db(request):
     # Only allow superusers or if DEBUG is True (or for this specific debugging session)
@@ -246,58 +246,57 @@ def checkout(request, theater_id):
     seat.is_booked = True
     seat.save()
     
-    # Create Razorpay Order
-    amount = int(theater.price * 100) # Amount in paise
-    currency = "INR"
+    # Create Stripe Payment Intent
+    amount = int(theater.price * 100)  # Amount in paise/cents
     
-    razorpay_order = razorpay_client.order.create({
-        'amount': amount,
-        'currency': currency,
-        'payment_capture': '1'
-    })
-    
-    booking.payment_intent_id = razorpay_order['id']
-    booking.save()
-    
-    context = {
-        'theater': theater,
-        'booking': booking,
-        'razorpay_order_id': razorpay_order['id'],
-        'razorpay_merchant_key': settings.RAZORPAY_KEY_ID,
-        'razorpay_amount': amount,
-        'currency': currency,
-        'callback_url': request.build_absolute_uri(f'/bookings/callback/')
-    }
-    return render(request, 'movies/checkout.html', context)
+    try:
+        payment_intent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency="inr",
+            metadata={
+                'booking_id': booking.id,
+                'user_id': request.user.id,
+                'movie': theater.movie.name,
+                'seat': seat.seat_number
+            }
+        )
+        
+        booking.payment_intent_id = payment_intent.id
+        booking.save()
+        
+        context = {
+            'theater': theater,
+            'booking': booking,
+            'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
+            'client_secret': payment_intent.client_secret,
+            'amount': theater.price,
+        }
+        return render(request, 'movies/checkout.html', context)
+    except Exception as e:
+        # If payment intent creation fails, free the seat
+        seat.is_booked = False
+        seat.save()
+        booking.delete()
+        return redirect('book_seats', theater_id=theater.id)
 
 @login_required
 def payment_callback(request):
     if request.method == "POST":
         try:
-            payment_id = request.POST.get('razorpay_payment_id', '')
-            razorpay_order_id = request.POST.get('razorpay_order_id', '')
-            signature = request.POST.get('razorpay_signature', '')
+            payment_intent_id = request.POST.get('payment_intent_id', '')
             
-            params_dict = {
-                'razorpay_order_id': razorpay_order_id,
-                'razorpay_payment_id': payment_id,
-                'razorpay_signature': signature
-            }
-            
-            # Verify Signature
-            razorpay_client.utility.verify_payment_signature(params_dict)
+            # Retrieve the payment intent from Stripe
+            payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
             
             # Get Booking
-            booking = Booking.objects.get(payment_intent_id=razorpay_order_id)
+            booking = Booking.objects.get(payment_intent_id=payment_intent_id)
             
-            # Use existing payment_success view logic (but we can redirect or call it)
-            # We'll basically reproduce the success logic or redirect to success url
-            # But the success view expects booking_id.
+            # Check if payment was successful
+            if payment_intent.status == 'succeeded':
+                return redirect('payment_success', booking_id=booking.id)
+            else:
+                return render(request, 'movies/payment_failure.html')
             
-            return redirect('payment_success', booking_id=booking.id)
-            
-        except razorpay.errors.SignatureVerificationError:
-            return render(request, 'movies/payment_failure.html')
         except Exception as e:
             print(e)
             return render(request, 'movies/payment_failure.html')
