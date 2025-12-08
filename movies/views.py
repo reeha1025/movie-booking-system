@@ -11,7 +11,6 @@ import io
 from django.conf import settings
 from datetime import datetime, timedelta
 import random
-import stripe
 
 def cleanup_expired_bookings():
     """Cancels pending bookings that have expired and frees the seats."""
@@ -30,14 +29,7 @@ def cleanup_expired_bookings():
         booking.status = Booking.StatusChoices.CANCELLED
         booking.save()
 
-# Initialize Stripe
-stripe.api_key = settings.STRIPE_SECRET_KEY
-
 def populate_db(request):
-    # Only allow superusers or if DEBUG is True (or for this specific debugging session)
-    # Ideally should be protected, but for the user's request we'll make it accessible
-    # to fix the empty DB issue.
-    
     # Create Movies
     movies_data = [
         {
@@ -204,12 +196,6 @@ def checkout(request, theater_id):
     theater = get_object_or_404(Theater, pk=theater_id)
     seats_selected = request.GET.getlist('seats')
     
-    # Create a pending booking for the first seat found (simplified for this task constraints)
-    # Ideally should handle multiple seats, but model links Booking to one Seat.
-    # We will assume single seat booking or just pick one for the demo flow.
-    # Or creating multiple bookings? The simplified task implies "Booking" object.
-    # Let's create one Booking for the first seat.
-    
     if not seats_selected:
         return redirect('theater_list', movie_id=theater.movie.id)
 
@@ -246,57 +232,24 @@ def checkout(request, theater_id):
     seat.is_booked = True
     seat.save()
     
-    # Create Stripe Payment Intent
-    amount = int(theater.price * 100)  # Amount in paise/cents
+    # Generate dummy payment ID
+    booking.payment_intent_id = f"DUMMY_PAY_{booking.id}_{timezone.now().timestamp()}"
+    booking.save()
     
-    try:
-        payment_intent = stripe.PaymentIntent.create(
-            amount=amount,
-            currency="inr",
-            metadata={
-                'booking_id': booking.id,
-                'user_id': request.user.id,
-                'movie': theater.movie.name,
-                'seat': seat.seat_number
-            }
-        )
-        
-        booking.payment_intent_id = payment_intent.id
-        booking.save()
-        
-        context = {
-            'theater': theater,
-            'booking': booking,
-            'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
-            'client_secret': payment_intent.client_secret,
-            'amount': theater.price,
-        }
-        return render(request, 'movies/checkout.html', context)
-    except Exception as e:
-        # If payment intent creation fails, free the seat
-        seat.is_booked = False
-        seat.save()
-        booking.delete()
-        return redirect('book_seats', theater_id=theater.id)
+    context = {
+        'theater': theater,
+        'booking': booking,
+        'amount': theater.price,
+    }
+    return render(request, 'movies/checkout.html', context)
 
 @login_required
 def payment_callback(request):
     if request.method == "POST":
         try:
-            payment_intent_id = request.POST.get('payment_intent_id', '')
-            
-            # Retrieve the payment intent from Stripe
-            payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
-            
-            # Get Booking
-            booking = Booking.objects.get(payment_intent_id=payment_intent_id)
-            
-            # Check if payment was successful
-            if payment_intent.status == 'succeeded':
-                return redirect('payment_success', booking_id=booking.id)
-            else:
-                return render(request, 'movies/payment_failure.html')
-            
+            booking_id = request.POST.get('booking_id', '')
+            booking = Booking.objects.get(id=booking_id)
+            return redirect('payment_success', booking_id=booking.id)
         except Exception as e:
             print(e)
             return render(request, 'movies/payment_failure.html')
@@ -346,11 +299,10 @@ def payment_success(request, booking_id):
             message,
             settings.DEFAULT_FROM_EMAIL,
             [booking.user.email],
-            fail_silently=False,
+            fail_silently=True,
         )
     except Exception as e:
         print(f"Email sending failed: {e}")
-        # Continue rendering success page even if email fails
 
     return render(request, 'movies/payment_success.html', {'booking': booking})
 
@@ -384,12 +336,10 @@ def admin_dashboard(request):
     movie_data = [m.num_bookings for m in popular_movies]
     
     # 4. Peak Theater Timings
-    # Group by hour of the show
     peak_times = Booking.objects.filter(status=Booking.StatusChoices.CONFIRMED).values('theater__time__hour').annotate(
         count=Count('id')
     ).order_by('-count')[:5]
     
-    # Simple formatting for time labels
     time_labels = [f"{t['theater__time__hour']}:00" for t in peak_times]
     time_data = [t['count'] for t in peak_times]
 
@@ -408,12 +358,10 @@ def add_theaters_view(request):
     if not request.user.is_staff:
         return redirect('movie_list')
     if request.method == 'POST':
-        # Add theater logic
         pass
     return render(request, 'movies/add_theaters.html')
 
 def create_temp_admin(request):
-    # Security risk in production, but requested for dev
     try:
         if not User.objects.filter(username='admin').exists():
             User.objects.create_superuser('admin', 'admin@example.com', 'admin')
@@ -423,7 +371,6 @@ def create_temp_admin(request):
         return HttpResponse(f"Error: {e}")
 
 def run_migrations(request):
-    # Security risk in production
     output = io.StringIO()
     call_command('migrate', stdout=output)
     return HttpResponse(output.getvalue(), content_type='text/plain')
@@ -432,7 +379,6 @@ def run_migrations(request):
 def analytics_dashboard(request):
     if not request.user.is_staff:
         return redirect('movie_list')
-    # Simple analytics
     total_revenue = Booking.objects.filter(payment_status=Booking.PaymentStatus.PAID).aggregate(
         total=Sum('theater__price')
     )['total'] or 0
