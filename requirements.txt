@@ -10,6 +10,7 @@ sqlparse==0.5.4
 typing-extensions==4.15.0
 asgiref==3.11.0
 python-dotenv==1.0.1
+razorpay==1.4.2
 
 
 
