@@ -340,7 +340,7 @@ def upi_scanner(request, booking_id):
 
 @login_required
 def payment_success(request, booking_id):
-    booking = get_object_or_404(Booking, pk=booking_id)
+   booking = get_object_or_404(Booking, pk=booking_id, user=request.user)
     
     # Update booking status
     booking.payment_status = Booking.PaymentStatus.PAID
@@ -462,3 +462,4 @@ def analytics_dashboard(request):
     )['total'] or 0
     
     return render(request, 'movies/analytics_dashboard.html', {'revenue': total_revenue})
+
