@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
 from django.core.management import call_command
 from django.contrib.auth.models import User
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Q
 from django.utils import timezone
 from .models import Movie, Theater, Seat, Booking, GENRE_CHOICES, LANGUAGE_CHOICES
 import io
@@ -378,7 +378,7 @@ def admin_dashboard(request):
     
     # 3. Popular Movies (for Chart)
     popular_movies = Movie.objects.annotate(
-        num_bookings=Count('booking', filter=models.Q(booking__status=Booking.StatusChoices.CONFIRMED))
+        num_bookings=Count('booking', filter=Q(booking__status=Booking.StatusChoices.CONFIRMED))
     ).order_by('-num_bookings')[:5]
     
     movie_labels = [m.name for m in popular_movies]
@@ -439,4 +439,3 @@ def analytics_dashboard(request):
     )['total'] or 0
     
     return render(request, 'movies/analytics_dashboard.html', {'revenue': total_revenue})
-
