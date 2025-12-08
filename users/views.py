@@ -4,6 +4,7 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from .forms import UserRegisterForm, UserUpdateForm
 from django.contrib.auth.forms import AuthenticationForm
+from .models import Booking  # Import Booking model
 
 def home(request):
     return redirect('movie_list')
@@ -48,9 +49,16 @@ def profile(request):
             return redirect('profile')
     else:
         u_form = UserUpdateForm(instance=request.user)
+    
+    # Fetch bookings for the logged-in user, ordered by most recent
+    bookings = Booking.objects.filter(
+        user=request.user, 
+        status=Booking.StatusChoices.CONFIRMED
+    ).select_related('movie', 'theater', 'seat').order_by('-booked_at')
 
     context = {
-        'u_form': u_form
+        'u_form': u_form,
+        'bookings': bookings
     }
 
     return render(request, 'users/profile.html', context)
