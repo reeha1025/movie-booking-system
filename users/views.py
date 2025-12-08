@@ -4,7 +4,7 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from .forms import UserRegisterForm, UserUpdateForm
 from django.contrib.auth.forms import AuthenticationForm
-from .models import Booking  # Import Booking model
+from movies.models import Booking  # FIXED: Import from movies.models, not users.models
 
 def home(request):
     return redirect('movie_list')
