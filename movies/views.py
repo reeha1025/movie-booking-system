@@ -45,45 +45,45 @@ def populate_db(request):
             'name': 'The Avengers',
             'image': 'movies/635217f73e372771013edb4c-the-avengers-poster-marvel-movie-canvas1.jpg',
             'rating': 8.5,
-            'cast': 'Robert Downey Jr., Chris Evans, Mark Ruffalo, Chris Hemsworth',
-            'description': 'Earth\'s mightiest heroes must come together and learn to fight as a team to stop Loki and his alien army from enslaving humanity.',
+            'cast': 'Robert Downey Jr., Chris Evans, Mark Ruffalo, Chris Hemsworth, Scarlett Johansson',
+            'description': 'Earth\'s mightiest heroes must come together and learn to fight as a team to stop the mischievous Loki and his alien army from enslaving humanity.',
             'genre': 'Action',
             'language': 'English',
             'release_year': 2012,
-            'trailer_url': 'https://www.youtube.com/watch?v=eOrNdBpGMv8'
+            'trailer_url': 'https://youtu.be/6ZfuNTqbHE8'
         },
         {
             'name': 'Inception',
             'image': 'movies/IQsBhg9t747dLhjXfsChIGZy4XfugER8BF0Gw5MDhIcnY5nTA1.jpg',
             'rating': 8.8,
-            'cast': 'Leonardo DiCaprio, Tom Hardy, Ellen Page, Marion Cotillard',
-            'description': 'A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
+            'cast': 'Leonardo DiCaprio, Joseph Gordon-Levitt, Elliot Page, Tom Hardy',
+            'description': 'A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
             'genre': 'Sci-Fi',
             'language': 'English',
             'release_year': 2010,
-            'trailer_url': 'https://www.youtube.com/watch?v=YoHD9XEInc0'
+            'trailer_url': 'https://youtu.be/YoHD9XEInc0'
         },
         {
             'name': 'The Dark Knight',
             'image': 'movies/download.jpeg',
             'rating': 9.0,
             'cast': 'Christian Bale, Heath Ledger, Aaron Eckhart, Michael Caine',
-            'description': 'When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests.',
+            'description': 'When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.',
             'genre': 'Action',
             'language': 'English',
             'release_year': 2008,
-            'trailer_url': 'https://www.youtube.com/watch?v=EXeTwQWrcwY'
+            'trailer_url': 'https://youtu.be/EXeTwQWrcwY'
         },
         {
             'name': 'Interstellar',
             'image': 'movies/f5VK0h2bprRhR6iRrixcuEfRxSUF4l14F66vQYrsJGmKZ5nTA1.jpg',
             'rating': 8.6,
-            'cast': 'Matthew McConaughey, Anne Hathaway, Jessica Chastain, Michael Caine',
+            'cast': 'Matthew McConaughey, Anne Hathaway, Jessica Chastain, Mackenzie Foy',
             'description': 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.',
             'genre': 'Sci-Fi',
             'language': 'English',
             'release_year': 2014,
-            'trailer_url': 'https://www.youtube.com/watch?v=zSWdZVtXT7E'
+            'trailer_url': 'https://youtu.be/zSWdZVtXT7E'
         },
         {
             'name': 'The Matrix',
@@ -94,7 +94,7 @@ def populate_db(request):
             'genre': 'Sci-Fi',
             'language': 'English',
             'release_year': 1999,
-            'trailer_url': 'https://www.youtube.com/watch?v=vKQi3bBA1y8'
+            'trailer_url': 'https://youtu.be/vKQi3bBA1y8'
         }
     ]
     
@@ -340,7 +340,7 @@ def upi_scanner(request, booking_id):
 
 @login_required
 def payment_success(request, booking_id):
-   booking = get_object_or_404(Booking, pk=booking_id, user=request.user)
+    booking = get_object_or_404(Booking, pk=booking_id, user=request.user)
     
     # Update booking status
     booking.payment_status = Booking.PaymentStatus.PAID
@@ -462,4 +462,6 @@ def analytics_dashboard(request):
     )['total'] or 0
     
     return render(request, 'movies/analytics_dashboard.html', {'revenue': total_revenue})
+
+
 
