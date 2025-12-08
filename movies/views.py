@@ -338,40 +338,42 @@ def upi_scanner(request, booking_id):
     }
     return render(request, 'movies/qr_scanner.html', context)
 
-
 @login_required
 def payment_success(request, booking_id):
     booking = get_object_or_404(Booking, pk=booking_id)
+    
+    # Update booking status
     booking.payment_status = Booking.PaymentStatus.PAID
     booking.status = Booking.StatusChoices.CONFIRMED
     booking.save()
     
-    # Send Confirmation Email
+    # Try to send confirmation email (optional - won't block success page)
     try:
-        subject = f'Booking Confirmation - {booking.movie.name}'
-        message = (
-            f"Dear {booking.user.username},\n\n"
-            f"Your booking for '{booking.movie.name}' has been confirmed!\n\n"
-            f"Details:\n"
-            f"Theater: {booking.theater.name}\n"
-            f"Show Time: {booking.theater.time}\n"
-            f"Seat: {booking.seat.seat_number}\n"
-            f"Price: Rs. {booking.theater.price}\n"
-            f"Booking ID: {booking.id}\n"
-            f"Payment ID: {booking.payment_intent_id or 'N/A'}\n\n"
-            f"Enjoy the show!\n"
-            f"Team BookMySeat"
-        )
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [booking.user.email],
-            fail_silently=False,
-        )
+        if booking.user.email:
+            subject = f'Booking Confirmation - {booking.movie.name}'
+            message = (
+                f"Dear {booking.user.username},\n\n"
+                f"Your booking for '{booking.movie.name}' has been confirmed!\n\n"
+                f"Details:\n"
+                f"Theater: {booking.theater.name}\n"
+                f"Show Time: {booking.theater.time}\n"
+                f"Seat: {booking.seat.seat_number}\n"
+                f"Price: Rs. {booking.theater.price}\n"
+                f"Booking ID: {booking.id}\n"
+                f"Payment ID: {booking.payment_intent_id or 'N/A'}\n\n"
+                f"Enjoy the show!\n"
+                f"Team BookMySeat"
+            )
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [booking.user.email],
+                fail_silently=True,
+            )
     except Exception as e:
         print(f"Email sending failed: {e}")
-        # Continue rendering success page even if email fails
+        pass
 
     return render(request, 'movies/payment_success.html', {'booking': booking})
 
@@ -383,6 +385,7 @@ def cancel_booking(request, booking_id):
     return redirect('movie_list')
 
 @login_required
+
 def admin_dashboard(request):
     if not request.user.is_staff:
         return redirect('movie_list')
