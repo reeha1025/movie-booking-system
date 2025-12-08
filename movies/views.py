@@ -196,7 +196,7 @@ def book_seats(request, theater_id):
 
         # Redirect to checkout with selected seats as query params
         query_string = "&".join([f"seats={s}" for s in selected_seats])
-        return redirect(f"/movies/theater/{theater.id}/checkout/?{query_string}") 
+        return redirect(f"/theater/{theater.id}/checkout/?{query_string}")
     return render(request, 'movies/seat_selection.html', {'theater': theater, 'seats': seats})
 
 @login_required
