@@ -1,0 +1,93 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4 text-white">Admin Dashboard</h2>
+
+    <!-- Top Stats Cards -->
+    <div class="row mb-5">
+        <div class="col-md-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Revenue</h5>
+                    <div class="display-4">₹{{ total_revenue }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Confirmed Bookings</h5>
+                    <div class="display-4">{{ total_bookings }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100" style="background-color: #f8f9fa;">
+                <div class="card-header font-weight-bold text-dark">Popular Movies</div>
+                <div class="card-body">
+                    <canvas id="movieChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100" style="background-color: #f8f9fa;">
+                <div class="card-header font-weight-bold text-dark">Peak Theater Timings</div>
+                <div class="card-body">
+                    <canvas id="timeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Popular Movies Chart
+    const movieCtx = document.getElementById('movieChart').getContext('2d');
+    new Chart(movieCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ movie_labels| safe }},
+        datasets: [{
+            label: 'Bookings',
+            data: {{ movie_data| safe }},
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+            }]
+        },
+        options: {
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+    }
+    });
+
+    // Peak Timings Chart
+    const timeCtx = document.getElementById('timeChart').getContext('2d');
+    new Chart(timeCtx, {
+        type: 'line',
+        data: {
+            labels: {{ time_labels| safe }},
+        datasets: [{
+            label: 'Bookings',
+            data: {{ time_data| safe }},
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.3
+            }]
+        },
+        options: {
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+    }
+    });
+</script>
+{% endblock %}

@@ -1,5 +1,7 @@
 from django.db import models
-from django.contrib.auth.models import User 
+from django.contrib.auth.models import User
+from django.core.validators import RegexValidator
+import re 
 
 GENRE_CHOICES = [
     ('Action', 'Action'), ('Adventure', 'Adventure'), ('Animation', 'Animation'), ('Comedy', 'Comedy'),
@@ -26,7 +28,23 @@ class Movie(models.Model):
     genre = models.CharField(max_length=32, choices=GENRE_CHOICES, default='Drama')
     language = models.CharField(max_length=32, choices=LANGUAGE_CHOICES, default='English')
     release_year = models.PositiveIntegerField(blank=True, null=True)
-    trailer_url = models.URLField(blank=True, null=True)
+    trailer_url = models.URLField(blank=True, null=True, validators=[
+        RegexValidator(
+            regex=r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.be)\/.+$',
+            message='Enter a valid YouTube URL'
+        )
+    ])
+
+    @property
+    def youtube_embed_url(self):
+        if not self.trailer_url:
+            return None
+        # Extract video ID
+        regex = r'(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})'
+        match = re.search(regex, self.trailer_url)
+        if match:
+            return f'https://www.youtube.com/embed/{match.group(1)}'
+        return None
 
     def __str__(self):
         return f"{self.name} ({self.genre}, {self.language})"

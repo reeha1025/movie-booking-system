@@ -121,10 +121,37 @@
     </div>
     {% endif %}
   
+    <form method="get" class="mb-4">
+      <div class="form-row align-items-end">
+        <div class="col-md-4">
+          <label for="genre">Genre</label>
+          <select name="genre" id="genre" class="form-control">
+            <option value="">All Genres</option>
+            {% for value, label in genre_choices %}
+            <option value="{{ value }}" {% if selected_genre == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="language">Language</label>
+          <select name="language" id="language" class="form-control">
+            <option value="">All Languages</option>
+            {% for value, label in language_choices %}
+            <option value="{{ value }}" {% if selected_language == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <button type="submit" class="btn btn-primary">Apply Filters</button>
+          <a href="{% url 'movie_list' %}" class="btn btn-secondary">Clear</a>
+        </div>
+      </div>
+    </form>
+
     <div class="section-title">Recommended Movies</div>
     <div class="row">
         {% if movies %}
-      {% for movie in movies|slice:":4" %}
+      {% for movie in movies %}
       <div class="col-md-3 col-sm-6">
         <!-- Wrap the card in an anchor to make the entire card clickable -->
         <a href="{% url 'theater_list' movie.id %}" class="text-decoration-none">

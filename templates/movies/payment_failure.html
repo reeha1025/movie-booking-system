@@ -1,0 +1,12 @@
+{% extends "users/basic.html" %}
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Payment Failed!</h4>
+        <p>Unfortunately, your payment could not be processed.</p>
+        <hr>
+        <p class="mb-0">Please try again or contact support if the issue persists.</p>
+        <a href="{% url 'movie_list' %}" class="btn btn-primary mt-3">Back to Movies</a>
+    </div>
+</div>
+{% endblock %}

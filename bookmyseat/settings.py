@@ -161,6 +161,12 @@ STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
 
 # -------------------------------
+# RAZORPAY SETTINGS
+# -------------------------------
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_DIYdssxI5B3t3C') # Default test key for dev
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'S2Q7Q6J0Q7') # Placeholder, should be env var
+
+# -------------------------------
 # EMAIL SETTINGS
 # -------------------------------
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

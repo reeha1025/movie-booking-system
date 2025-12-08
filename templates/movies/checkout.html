@@ -9,6 +9,7 @@
     --title: #f0f6fc;
     --accent: #58a6ff;
     --success: #238636;
+    --danger: #da3633;
   }
 
   body {
@@ -35,28 +36,105 @@
     background: var(--success);
     border-color: var(--success);
   }
+
+  .btn-outline-danger {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+
+  #card-element {
+    background: white;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+  }
+
+  #card-errors {
+    color: var(--danger);
+    margin-top: 8px;
+  }
 </style>
 
 <div class="container py-4">
   <h2 class="title mb-3">Checkout</h2>
 
   <div class="card p-3 mb-3">
-    <div>
-      <h4 class="title">{{ theater.name }}</h4>
-      <div class="text">{{ theater.movie.name}} • {{ theater.format }} • {{ theater.time }}</div>
-      <div class="text">Movie: {{ booking.movie.name }}</div>
-      <div class="text">Seat: {{ booking.seat.seat_number }}</div>
-      <div class="text font-weight-bold mt-2">Total: ₹{{ amount }}</div>
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h4 class="title">{{ theater.name }}</h4>
+        <div class="text">{{ theater.movie.name }} • {{ theater.format }} • {{ theater.time }}</div>
+        <div class="text">Movie: {{ booking.movie.name }}</div>
+        <div class="text">Seat: {{ booking.seat.seat_number }}</div>
+        <div class="text font-weight-bold mt-2">Total: ₹{{ amount }}</div>
+      </div>
     </div>
   </div>
 
   <div class="card p-3">
-    <h5 class="title mb-3">Confirm Booking</h5>
-    <form action="{% url 'payment_success' booking.id %}" method="GET">
-      <button type="submit" class="btn btn-success btn-lg btn-block">
-        Confirm & Pay ₹{{ amount }}
+    <h5 class="title mb-3">Payment Details</h5>
+    <form id="payment-form">
+      <div id="card-element"></div>
+      <div id="card-errors" role="alert"></div>
+      <button id="submit-button" class="btn btn-primary btn-lg btn-block mt-3">
+        Pay ₹{{ amount }}
       </button>
     </form>
   </div>
 </div>
+
+<!-- Stripe.js -->
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+  const stripe = Stripe('{{ stripe_publishable_key }}');
+  const elements = stripe.elements();
+  const cardElement = elements.create('card', {
+    style: {
+      base: {
+        fontSize: '16px',
+        color: '#32325d',
+      }
+    }
+  });
+  cardElement.mount('#card-element');
+
+  const form = document.getElementById('payment-form');
+  const submitButton = document.getElementById('submit-button');
+  const cardErrors = document.getElementById('card-errors');
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    submitButton.disabled = true;
+    submitButton.textContent = 'Processing...';
+
+    const { error, paymentIntent } = await stripe.confirmCardPayment(
+      '{{ client_secret }}',
+      {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: '{{ request.user.username }}',
+            email: '{{ request.user.email }}'
+          }
+        }
+      }
+    );
+
+    if (error) {
+      cardErrors.textContent = error.message;
+      submitButton.disabled = false;
+      submitButton.textContent = 'Pay ₹{{ amount }}';
+    } else {
+      // Payment succeeded, redirect to success page
+      window.location.href = '/bookings/{{ booking.id }}/payment-success/';
+    }
+  });
+
+  cardElement.on('change', function (event) {
+    if (event.error) {
+      cardErrors.textContent = event.error.message;
+    } else {
+      cardErrors.textContent = '';
+    }
+  });
+</script>
 {% endblock %}

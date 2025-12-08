@@ -19,6 +19,7 @@ urlpatterns = [
     path('bookings/<int:booking_id>/otp/<str:upi_app>/', views.upi_otp, name='upi_otp'),
     path('bookings/<int:booking_id>/scanner/', views.upi_scanner, name='upi_scanner'),
     path('bookings/<int:booking_id>/payment-success/', views.payment_success, name='payment_success'),
+    path('bookings/callback/', views.payment_callback, name='payment_callback'),
     path('bookings/<int:booking_id>/cancel/', views.cancel_booking, name='cancel_booking'),
 
     # Admin tools
