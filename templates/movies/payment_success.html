@@ -1,68 +1,187 @@
+```html
 {% extends "users/basic.html" %}
 {% block content %}
 <style>
-  .success-container { max-width: 600px; margin: 0 auto; padding: 40px 20px; text-align: center; }
-  .success-icon { font-size: 80px; color: #FF0000; margin-bottom: 20px; }
-  .booking-details { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 30px; }
-  .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-  .detail-row:last-child { border-bottom: none; }
+  :root{
+    --accent: #10B981; /* green accent */
+    --muted: #6b7280;
+    --card-bg: #ffffff;
+    --shadow: 0 10px 30px rgba(2,6,23,0.08);
+  }
+  .success-wrap {
+    min-height: 70vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 48px 16px;
+    background: linear-gradient(180deg,#f7fdf6 0%, #ffffff 100%);
+  }
+  .card {
+    max-width: 880px;
+    width:100%;
+    background:var(--card-bg);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 28px;
+    display:grid;
+    grid-template-columns: 1fr 360px;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width:900px){
+    .card { grid-template-columns: 1fr; }
+  }
+  .hero {
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .badge {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background: rgba(16,185,129,0.12);
+    color: var(--accent);
+    padding:6px 10px;
+    border-radius:999px;
+    font-weight:700;
+    width:fit-content;
+  }
+  h1 { margin:6px 0; font-size:28px; color:#064e3b; }
+  p.lead { margin:0; color:var(--muted); font-size:15px; }
+  .actions { margin-top:18px; display:flex; gap:12px; flex-wrap:wrap; }
+  .btn {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:600;
+  }
+  .btn-primary { background:var(--accent); color:white; border: none; }
+  .btn-outline { background: transparent; color: #044E3B; border: 1px solid rgba(4,78,59,0.08); }
+
+  .ticket {
+    background: linear-gradient(180deg,#f8fff9, #ffffff);
+    padding:18px;
+    border-radius:12px;
+    border:1px solid rgba(6,95,70,0.06);
+  }
+  .ticket h3 { margin:0 0 8px 0; font-size:18px; color:#064e3b; }
+  .meta { display:flex; justify-content:space-between; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .meta div { min-width: 140px; }
+  .muted { color:var(--muted); font-size:13px; }
+  .big { font-size:20px; font-weight:700; color:#063f3a; }
+
+  .qr { text-align:center; margin-top:14px; }
+  .footer-note { margin-top:12px; color:var(--muted); font-size:13px; }
+
+  /* Confetti pieces */
+  .confetti-piece {
+    position:fixed;
+    top:-10vh;
+    width:10px;
+    height:14px;
+    opacity:0.95;
+    z-index:9999;
+    pointer-events:none;
+    transform: rotate(15deg);
+  }
+
+  /* Messages (if any) */
+  .messages { margin-top:12px; list-style:none; padding:0; }
+  .messages li { padding:10px 14px; border-radius:8px; margin-bottom:8px; display:inline-block; background:#ecfdf5; color:#064e3b; border:1px solid #bbf7d0; }
 </style>
 
-<div class="container py-5">
-  <div class="success-container">
-    <div class="success-icon">
-      <i class="fas fa-check-circle"></i>
+<div class="success-wrap">
+  <div class="card" role="main" aria-labelledby="ps-heading">
+    <div class="hero" id="left-col">
+      <span class="badge">✅ Payment Completed</span>
+      <h1 id="ps-heading">Payment successful — Your booking is confirmed</h1>
+      <p class="lead">Thanks! Your payment has been processed and your seat is reserved. A confirmation email has been sent to your registered email address.</p>
+
+      {% if messages %}
+        <ul class="messages" aria-live="polite">
+          {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      <div class="actions">
+        <a class="btn btn-primary" href="{% url 'profile' %}">
+          <i class="fas fa-ticket-alt"></i> View My Bookings
+        </a>
+        <a class="btn btn-outline" href="{% url 'movie_list' %}">
+          <i class="fas fa-film"></i> Browse More Movies
+        </a>
+      </div>
+
+      <p class="footer-note">Bring a copy of this confirmation or show the QR at the theater entrance. For help, contact <a href="mailto:support@bookmyseat.com">support@bookmyseat.com</a>.</p>
     </div>
-    
-    <h1 class="text-success mb-3">Payment Successful!</h1>
-    <p class="lead">Your movie ticket has been booked successfully.</p>
-    
-    <div class="booking-details">
-      <h3 class="mb-4">Booking Details</h3>
-      
-      <div class="detail-row">
-        <strong>Movie:</strong>
-        <span>{{ booking.movie.name }}</span>
+
+    <aside class="ticket" id="right-col" aria-label="Booking details">
+      <h3>{{ booking.movie.name }} <span style="float:right;font-weight:700;color:#10B981">Confirmed</span></h3>
+      <div class="muted">Theater</div>
+      <div class="big">{{ booking.theater.name }}</div>
+
+      <div class="meta">
+        <div>
+          <div class="muted">Show Time</div>
+          <div class="big">{{ booking.theater.time|date:"d M Y, h:i A" }}</div>
+        </div>
+        <div>
+          <div class="muted">Seat</div>
+          <div class="big">{{ booking.seat.seat_number }}</div>
+        </div>
       </div>
-      
-      <div class="detail-row">
-        <strong>Theater:</strong>
-        <span>{{ booking.theater.name }}</span>
+
+      <div style="margin-top:10px;">
+        <div class="muted">Amount Paid</div>
+        <div class="big">₹{{ booking.theater.price }}</div>
       </div>
-      
-      <div class="detail-row">
-        <strong>Show Time:</strong>
-        <span>{{ booking.theater.time|date:"d M Y, h:i A" }}</span>
+
+      <div class="qr">
+        <img alt="ticket-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=BOOKMYSEAT-{{ booking.id }}-{{ booking.seat.seat_number }}" />
+        <div class="muted" style="margin-top:6px;font-size:13px;">Show this at the door</div>
       </div>
-      
-      <div class="detail-row">
-        <strong>Seat Number:</strong>
-        <span>{{ booking.seat.seat_number }}</span>
+
+      <div style="margin-top:10px; font-size:13px; color:var(--muted);">
+        Booking ID: <strong>#{{ booking.id }}</strong><br>
+        Payment Ref: <strong>{{ booking.payment_intent_id|default:"N/A" }}</strong>
       </div>
-      
-      <div class="detail-row">
-        <strong>Amount Paid:</strong>
-        <span>₹{{ booking.theater.price }}</span>
-      </div>
-      
-      <div class="detail-row">
-        <strong>Booking ID:</strong>
-        <span>#{{ booking.id }}</span>
-      </div>
-    </div>
-    
-    <div class="mt-4">
-      <a href="{% url 'profile' %}" class="btn btn-primary btn-lg me-3">
-        <i class="fas fa-user me-2"></i>View Profile
-      </a>
-      <a href="{% url 'movie_list' %}" class="btn btn-outline-primary btn-lg">
-        <i class="fas fa-film me-2"></i>Browse More Movies
-      </a>
-    </div>
-    
-    <div class="mt-4 text-muted">
-      <small>A confirmation email has been sent to your registered email address.</small>
-    </div>
+    </aside>
   </div>
 </div>
+
+<script>
+  // Small confetti burst (non-blocking, simple)
+  (function spawnConfetti(){
+    const colors = ['#10B981','#F59E0B','#6366F1','#EF4444','#06B6D4'];
+    for(let i=0;i<36;i++){
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = Math.random()*100 + '%';
+      el.style.background = colors[Math.floor(Math.random()*colors.length)];
+      el.style.transform = `rotate(${Math.random()*360}deg)`;
+      el.style.top = (-10 - Math.random()*10) + 'vh';
+      el.style.animation = `fall ${2 + Math.random()*1.5}s linear ${Math.random()*0.5}s forwards`;
+      document.body.appendChild(el);
+    }
+
+    // css animation injection
+    const style = document.createElement('style');
+    style.innerHTML = `@keyframes fall {
+      to { transform: translateY(110vh) rotate(200deg); opacity: 0.95; }
+    }`;
+    document.head.appendChild(style);
+    // remove confetti after 6s
+    setTimeout(()=> {
+      document.querySelectorAll('.confetti-piece').forEach(n=>n.remove());
+      style.remove();
+    },6000);
+  })();
+</script>
 {% endblock %}
+```
