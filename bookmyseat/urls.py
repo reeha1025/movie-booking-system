@@ -3,7 +3,21 @@ from django.urls import path, include, re_path
 from django.views.static import serve
 from django.conf import settings
 from django.conf.urls.static import static
-from movies.views import analytics_dashboard
+
+# Import analytics view defensively so a broken movies.views import won't break startup
+try:
+    from movies.views import analytics_dashboard
+except Exception as e:
+    # Import failure — log for debugging and use a lightweight fallback view
+    import logging
+    from django.shortcuts import redirect
+
+    logging.exception("Failed to import analytics_dashboard from movies.views: %s", e)
+
+    def analytics_dashboard(request):
+        # Simple fallback: redirect to home so site doesn't 500 during deploy.
+        return redirect('movie_list')
+
 
 urlpatterns = [
     # Admin
@@ -26,4 +40,3 @@ if settings.DEBUG:
 urlpatterns += [
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
-
